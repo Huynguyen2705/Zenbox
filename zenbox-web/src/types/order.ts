@@ -3,8 +3,8 @@ import type { IDateValue, IDatePickerControl } from './common';
 // ----------------------------------------------------------------------
 
 export type IOrderTableFilters = {
-  name: string;
-  status: string;
+  name?: string;
+  status?: string;
   endDate: IDatePickerControl;
   startDate: IDatePickerControl;
 };

@@ -1,5 +1,5 @@
-import type { CheckoutContextValue } from 'src/types/checkout';
 import type { TableHeadCellProps } from 'src/components/table';
+import type { ICheckoutViewItem, CheckoutContextValue } from 'src/types/checkout';
 
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -12,23 +12,23 @@ import { CheckoutCartProduct } from './checkout-cart-product';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD: TableHeadCellProps[] = [
-  { id: 'product', label: 'Product' },
-  { id: 'price', label: 'Price' },
-  { id: 'quantity', label: 'Quantity' },
-  { id: 'totalAmount', label: 'Total Price', align: 'right' },
+  { id: 'product', label: 'Sản phẩm' },
+  { id: 'price', label: 'Giá' },
+  { id: 'quantity', label: 'Số lượng' },
+  { id: 'totalAmount', label: 'Thành tiền', align: 'right' },
   { id: '' },
 ];
 
 // ----------------------------------------------------------------------
 
 type Props = {
-  checkoutState: CheckoutContextValue['state'];
+  checkoutItems: ICheckoutViewItem[];
   onDeleteCartItem: CheckoutContextValue['onDeleteCartItem'];
   onChangeItemQuantity: CheckoutContextValue['onChangeItemQuantity'];
 };
 
 export function CheckoutCartProductList({
-  checkoutState,
+  checkoutItems,
   onDeleteCartItem,
   onChangeItemQuantity,
 }: Props) {
@@ -38,7 +38,7 @@ export function CheckoutCartProductList({
         <TableHeadCustom headCells={TABLE_HEAD} />
 
         <TableBody>
-          {checkoutState.items.map((row) => (
+          {checkoutItems.map((row) => (
             <CheckoutCartProduct
               key={row.id}
               row={row}

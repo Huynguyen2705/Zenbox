@@ -4,6 +4,7 @@ import type { StoreProduct } from '@medusajs/types';
 import type { IProductFilters } from 'src/types/product';
 
 import { useState } from 'react';
+import { orderBy } from 'es-toolkit';
 import { useBoolean, useSetState } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
@@ -13,6 +14,7 @@ import Typography from '@mui/material/Typography';
 
 import { paths } from 'src/routes/paths';
 
+import { PRODUCT_SORT_TYPE } from 'src/constants/enum';
 import {
   PRODUCT_SORT_OPTIONS,
   PRODUCT_COLOR_OPTIONS,
@@ -35,14 +37,15 @@ import { ProductFiltersResult } from '../product-filters-result';
 
 type Props = {
   products: StoreProduct[];
+  title?: string;
 };
 
-export function ProductShopView({ products }: Props) {
+export function ProductShopView({ products, title }: Props) {
   const { state: checkoutState } = useCheckoutContext();
 
   const openFilters = useBoolean();
 
-  const [sortBy, setSortBy] = useState('featured');
+  const [sortBy, setSortBy] = useState<string>(PRODUCT_SORT_TYPE.NEWEST);
 
   const filters = useSetState<IProductFilters>({
     gender: [],
@@ -52,6 +55,21 @@ export function ProductShopView({ products }: Props) {
     priceRange: [0, 200],
   });
   const { state: currentFilters } = filters;
+  // const { data: productListRes } = useSWR(['product-list', sortBy], async () => {
+  //   const res = await sdk.store.product.list({
+  //     limit: 100,
+  //     offset: 0,
+  //     region_id: process.env.NEXT_PUBLIC_REGION_ID,
+  //     // category_id:
+  //     order: MAP_SORT_TYPE[sortBy]
+  //   },);
+
+  //   return res;
+  // }, {
+  //   fallbackData: {
+  //     products
+  //   } as StoreProductListResponse
+  // })
 
   const dataFiltered = applyFilter({
     inputData: products,
@@ -117,7 +135,7 @@ export function ProductShopView({ products }: Props) {
       <CartIcon totalItems={checkoutState.totalItems} />
 
       <Typography variant="h4" sx={{ my: { xs: 3, md: 5 } }}>
-        Cửa hàng
+        {title ?? ' Cửa hàng'}
       </Typography>
 
       <Stack spacing={2.5} sx={{ mb: { xs: 3, md: 5 } }}>
@@ -137,7 +155,7 @@ export function ProductShopView({ products }: Props) {
 type ApplyFilterProps = {
   sortBy: string;
   filters: IProductFilters;
-  inputData: StoreProduct[];
+  inputData: (StoreProduct & { firstPrice?: number | null })[];
 };
 
 function applyFilter({ inputData, filters, sortBy }: ApplyFilterProps) {
@@ -151,13 +169,19 @@ function applyFilter({ inputData, filters, sortBy }: ApplyFilterProps) {
   //   inputData = orderBy(inputData, ['totalSold'], ['desc']);
   // }
 
-  // if (sortBy === 'newest') {
-  //   inputData = orderBy(inputData, ['createdAt'], ['desc']);
-  // }
+  if (sortBy === PRODUCT_SORT_TYPE.NEWEST) {
+    inputData = orderBy(inputData, ['created_at'], ['desc']);
+  }
 
-  // if (sortBy === 'priceDesc') {
-  //   inputData = orderBy(inputData, ['price'], ['desc']);
-  // }
+  if (sortBy === PRODUCT_SORT_TYPE.PRICE_DESC) {
+    inputData = inputData.map((item) => ({ ...item, firstPrice: item.variants?.[0].calculated_price?.calculated_amount }))
+    inputData = orderBy(inputData, ['firstPrice'], ['desc']);
+  }
+
+  if (sortBy === PRODUCT_SORT_TYPE.PRICE_ASC) {
+    inputData = inputData.map((item) => ({ ...item, firstPrice: item.variants?.[0].calculated_price?.calculated_amount }))
+    inputData = orderBy(inputData, ['firstPrice'], ['asc']);
+  }
 
   // if (sortBy === 'priceAsc') {
   //   inputData = orderBy(inputData, ['price'], ['asc']);

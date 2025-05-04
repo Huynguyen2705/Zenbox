@@ -4,7 +4,7 @@ import { useSetState } from 'minimal-shared/hooks';
 import { useMemo, useEffect, useCallback } from 'react';
 
 import { sdk } from 'src/lib/medusa';
-import axios, { endpoints } from 'src/lib/axios';
+import { ROLES } from 'src/constants/enum';
 
 import { JWT_STORAGE_KEY } from './constant';
 import { AuthContext } from '../auth-context';
@@ -38,14 +38,19 @@ export function AuthProvider({ children, type }: Props) {
         if (type === 'store') {
           const res = await sdk.store.customer.retrieve();
           console.log({ res })
+
           user = {
             ...res.customer,
-            role: 'customer',
+            role: ROLES.CUSTOMER,
           };
-        } else {
-          const res = await axios.get(endpoints.auth.me);
+        } else if (type === 'admin') {
 
-          user = res.data?.user;
+          const res = await sdk.admin.user.me();
+          console.log("Kiểm tra Res", { res })
+          user = {
+            ...res.user,
+            role: ROLES.ADMIN,
+          }
         }
 
         setState({ user: { ...user, accessToken }, loading: false });

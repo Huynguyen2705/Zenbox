@@ -3,7 +3,7 @@
 import type { IAddressItem } from 'src/types/common';
 import type { ICheckoutItem, ICheckoutState } from 'src/types/checkout';
 
-import { union, isEqual } from 'es-toolkit';
+import { isEqual } from 'es-toolkit';
 import { getStorage } from 'minimal-shared/utils';
 import { useLocalStorage } from 'minimal-shared/hooks';
 import { useMemo, useState, Suspense, useEffect, useCallback } from 'react';
@@ -11,14 +11,17 @@ import { useMemo, useState, Suspense, useEffect, useCallback } from 'react';
 import { paths } from 'src/routes/paths';
 import { useRouter, usePathname, useSearchParams } from 'src/routes/hooks';
 
+import { toast } from 'src/components/snackbar';
 import { SplashScreen } from 'src/components/loading-screen';
+
+import { useAuthContext } from 'src/auth/hooks';
 
 import { CheckoutContext } from './checkout-context';
 
 // ----------------------------------------------------------------------
 
 const CHECKOUT_STORAGE_KEY = 'app-checkout';
-const CHECKOUT_STEPS = ['Cart', 'Billing & address', 'Payment'];
+const CHECKOUT_STEPS = ['Giỏ hàng', 'Địa chỉ', 'Thanh toán'];
 
 const initialState: ICheckoutState = {
   items: [],
@@ -54,6 +57,8 @@ function CheckoutContainer({ children }: CheckoutProviderProps) {
     ? Number(searchParams.get('step'))
     : null;
 
+  const { authenticated } = useAuthContext();
+
   const [loading, setLoading] = useState(true);
 
   const { state, setState, setField, resetState } = useLocalStorage<ICheckoutState>(
@@ -67,11 +72,11 @@ function CheckoutContainer({ children }: CheckoutProviderProps) {
 
   const updateTotals = useCallback(() => {
     const totalItems = state.items.reduce((total, item) => total + item.quantity, 0);
-    const subtotal = state.items.reduce((total, item) => total + item.quantity * item.price, 0);
+    // const subtotal = state.items.reduce((total, item) => total + item.quantity * item.price, 0);
 
-    setField('subtotal', subtotal);
+    // setField('subtotal', subtotal);
     setField('totalItems', totalItems);
-    setField('total', subtotal - state.discount + state.shipping);
+    // setField('total', subtotal - state.discount + state.shipping);
   }, [setField, state.discount, state.items, state.shipping]);
 
   useEffect(() => {
@@ -109,30 +114,31 @@ function CheckoutContainer({ children }: CheckoutProviderProps) {
   );
 
   const onAddToCart = useCallback(
-    (newItem: ICheckoutItem) => {
+    async (newItem: ICheckoutItem) => {
+
       const updatedItems = state.items.map((item) => {
-        if (item.id === newItem.id) {
+        if (item.variantId === newItem.variantId) {
           return {
             ...item,
-            colors: union(item.colors, newItem.colors),
             quantity: item.quantity + newItem.quantity,
           };
         }
         return item;
       });
 
-      if (!updatedItems.some((item) => item.id === newItem.id)) {
+      if (!updatedItems.some((item) => item.variantId === newItem.variantId)) {
         updatedItems.push(newItem);
       }
 
       setField('items', updatedItems);
+      toast.success('Sản phẩm đã được thêm vào giỏ hàng!')
     },
     [setField, state.items]
   );
 
   const onDeleteCartItem = useCallback(
-    (itemId: string) => {
-      const updatedItems = state.items.filter((item) => item.id !== itemId);
+    (variantId: string) => {
+      const updatedItems = state.items.filter((item) => item.variantId !== variantId);
 
       setField('items', updatedItems);
     },
@@ -140,9 +146,9 @@ function CheckoutContainer({ children }: CheckoutProviderProps) {
   );
 
   const onChangeItemQuantity = useCallback(
-    (itemId: string, quantity: number) => {
+    (variantId: string, quantity: number) => {
       const updatedItems = state.items.map((item) => {
-        if (item.id === itemId) {
+        if (item.variantId === variantId) {
           return { ...item, quantity };
         }
         return item;

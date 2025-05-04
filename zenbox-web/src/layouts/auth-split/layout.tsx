@@ -5,11 +5,9 @@ import type { Breakpoint } from '@mui/material/styles';
 import { merge } from 'es-toolkit';
 
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 
 import { paths } from 'src/routes/paths';
-import { RouterLink } from 'src/routes/components';
 
 import { CONFIG } from 'src/global-config';
 
@@ -20,7 +18,6 @@ import { AuthSplitContent } from './content';
 import { MainSection } from '../core/main-section';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
-import { SettingsButton } from '../components/settings-button';
 
 import type { AuthSplitSectionProps } from './section';
 import type { AuthSplitContentProps } from './content';
@@ -69,17 +66,17 @@ export function AuthSplitLayout({
       rightArea: (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
           {/** @slot Help link */}
-          <Link
+          {/* <Link
             href={paths.faqs}
             component={RouterLink}
             color="inherit"
             sx={{ typography: 'subtitle2' }}
           >
             Need help?
-          </Link>
+          </Link> */}
 
           {/** @slot Settings button */}
-          <SettingsButton />
+          {/* <SettingsButton /> */}
         </Box>
       ),
     };
@@ -123,26 +120,7 @@ export function AuthSplitLayout({
             path: paths.auth.jwt.signIn,
             icon: `${CONFIG.assetsDir}/assets/icons/platforms/ic-jwt.svg`,
           },
-          {
-            label: 'Firebase',
-            path: paths.auth.firebase.signIn,
-            icon: `${CONFIG.assetsDir}/assets/icons/platforms/ic-firebase.svg`,
-          },
-          {
-            label: 'Amplify',
-            path: paths.auth.amplify.signIn,
-            icon: `${CONFIG.assetsDir}/assets/icons/platforms/ic-amplify.svg`,
-          },
-          {
-            label: 'Auth0',
-            path: paths.auth.auth0.signIn,
-            icon: `${CONFIG.assetsDir}/assets/icons/platforms/ic-auth0.svg`,
-          },
-          {
-            label: 'Supabase',
-            path: paths.auth.supabase.signIn,
-            icon: `${CONFIG.assetsDir}/assets/icons/platforms/ic-supabase.svg`,
-          },
+
         ]}
       />
       <AuthSplitContent layoutQuery={layoutQuery} {...slotProps?.content}>

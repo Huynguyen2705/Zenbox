@@ -23,7 +23,7 @@ type NavDropdownProps = React.ComponentProps<'div'> & {
 export const NavDropdown = styled(({ open, children, ...other }: NavDropdownProps) => (
   <Fade in={open}>
     <div {...other}>
-      <NavDropdownPaper>{children}</NavDropdownPaper>
+      <NavDropdownPaper sx={{ p: 1 }}>{children}</NavDropdownPaper>
     </div>
   </Fade>
 ))(({ theme }) => ({

@@ -42,7 +42,6 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 
-import { OrderTableRow } from '../order-table-row';
 import { OrderTableToolbar } from '../order-table-toolbar';
 import { OrderTableFiltersResult } from '../order-table-filters-result';
 
@@ -256,7 +255,7 @@ export function OrderListView() {
                 />
 
                 <TableBody>
-                  {dataFiltered
+                  {/* {dataFiltered
                     .slice(
                       table.page * table.rowsPerPage,
                       table.page * table.rowsPerPage + table.rowsPerPage
@@ -270,7 +269,7 @@ export function OrderListView() {
                         onDeleteRow={() => handleDeleteRow(row.id)}
                         detailsHref={paths.dashboard.order.details(row.id)}
                       />
-                    ))}
+                    ))} */}
 
                   <TableEmptyRows
                     height={table.dense ? 56 : 56 + 20}

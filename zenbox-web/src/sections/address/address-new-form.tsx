@@ -21,19 +21,20 @@ import { Form, Field, schemaHelper } from 'src/components/hook-form';
 export type NewAddressSchemaType = zod.infer<typeof NewAddressSchema>;
 
 export const NewAddressSchema = zod.object({
-  city: zod.string().min(1, { message: 'City is required!' }),
-  state: zod.string().min(1, { message: 'State is required!' }),
-  name: zod.string().min(1, { message: 'Name is required!' }),
-  address: zod.string().min(1, { message: 'Address is required!' }),
-  zipCode: zod.string().min(1, { message: 'Zip code is required!' }),
+  city: zod.string().min(1, { message: 'Tỉnh/Thành phố không được để trống' }),
+  state: zod.string().min(1, { message: 'Quận/Huyện không được để trống' }),
+  firstName: zod.string().min(1, { message: 'Tên không được để trống' }),
+  lastName: zod.string().min(1, { message: 'Họ và tên đệm không được để trống' }),
+  address: zod.string().min(1, { message: 'Địa chỉ không được để trống' }),
   phoneNumber: schemaHelper.phoneNumber({ isValid: isValidPhoneNumber }),
-  country: schemaHelper.nullableInput(zod.string().min(1, { message: 'Country is required!' }), {
-    // message for null value
-    message: 'Country is required!',
-  }),
+  // country: schemaHelper.nullableInput(zod.string().min(1, { message: 'Country is required!' }), {
+  //   // message for null value
+  //   message: 'Country is required!',
+  // }),
   // Not required
   primary: zod.boolean(),
-  addressType: zod.string(),
+  email: zod.string().optional(),
+  // addressType: zod.string(),
 });
 
 // ----------------------------------------------------------------------
@@ -46,15 +47,13 @@ type Props = {
 
 export function AddressNewForm({ open, onClose, onCreate }: Props) {
   const defaultValues: NewAddressSchemaType = {
-    name: '',
+    firstName: '',
+    lastName: '',
     city: '',
     state: '',
     address: '',
-    zipCode: '',
-    country: '',
-    primary: true,
+    primary: false,
     phoneNumber: '',
-    addressType: 'Home',
   };
 
   const methods = useForm<NewAddressSchemaType>({
@@ -71,11 +70,14 @@ export function AddressNewForm({ open, onClose, onCreate }: Props) {
   const onSubmit = handleSubmit(async (data) => {
     try {
       onCreate({
-        name: data.name,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        name: `${data.firstName} ${data.lastName}`,
         phoneNumber: data.phoneNumber,
-        fullAddress: `${data.address}, ${data.city}, ${data.state}, ${data.country}, ${data.zipCode}`,
-        addressType: data.addressType,
-        primary: data.primary,
+        city: data.city,
+        state: data.state,
+        email: data.email,
+        fullAddress: `${data.address}, ${data.city}, ${data.state}`,
       });
       onClose();
     } catch (error) {
@@ -86,18 +88,27 @@ export function AddressNewForm({ open, onClose, onCreate }: Props) {
   return (
     <Dialog fullWidth maxWidth="sm" open={open} onClose={onClose}>
       <Form methods={methods} onSubmit={onSubmit}>
-        <DialogTitle>New address</DialogTitle>
+        <DialogTitle>Thêm địa chỉ</DialogTitle>
 
         <DialogContent dividers>
           <Stack spacing={3}>
-            <Field.RadioGroup
-              row
-              name="addressType"
-              options={[
-                { label: 'Home', value: 'Home' },
-                { label: 'Office', value: 'Office' },
-              ]}
-            />
+            <Box
+              sx={{
+                rowGap: 3,
+                columnGap: 2,
+                display: 'grid',
+                pt: 2,
+                gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' },
+              }}
+            >
+              <Field.Text name="firstName" label="Tên" />
+              <Field.Text name="lastName" label="Họ và tên đệm" />
+              <Field.Text name="email" label="Địa chỉ email" />
+
+              <Field.Phone disableSelect name="phoneNumber" label="Số điện thoại" country="VN" />
+            </Box>
+
+            <Field.Text name="address" label="Địa chỉ" />
 
             <Box
               sx={{
@@ -107,41 +118,22 @@ export function AddressNewForm({ open, onClose, onCreate }: Props) {
                 gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' },
               }}
             >
-              <Field.Text name="name" label="Full name" />
+              <Field.Text name="city" label="Tỉnh/Thành phố" />
 
-              <Field.Phone name="phoneNumber" label="Phone number" country="US" />
+              <Field.Text name="state" label="Quận/Huyện" />
             </Box>
 
-            <Field.Text name="address" label="Address" />
-
-            <Box
-              sx={{
-                rowGap: 3,
-                columnGap: 2,
-                display: 'grid',
-                gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(3, 1fr)' },
-              }}
-            >
-              <Field.Text name="city" label="Town/city" />
-
-              <Field.Text name="state" label="State" />
-
-              <Field.Text name="zipCode" label="Zip/code" />
-            </Box>
-
-            <Field.CountrySelect name="country" label="Country" placeholder="Choose a country" />
-
-            <Field.Checkbox name="primary" label="Use this address as default." />
+            {/* <Field.CountrySelect name="country" label="Country" placeholder="Choose a country" /> */}
           </Stack>
         </DialogContent>
 
         <DialogActions>
           <Button color="inherit" variant="outlined" onClick={onClose}>
-            Cancel
+            Hủy
           </Button>
 
           <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-            Deliver to this address
+            Lưu
           </LoadingButton>
         </DialogActions>
       </Form>

@@ -1,3 +1,5 @@
+
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid2';
@@ -9,10 +11,15 @@ import LinearProgress from '@mui/material/LinearProgress';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
+import { useCheckoutItems } from 'src/hooks/checkout';
+
 import { CONFIG } from 'src/global-config';
 
 import { Iconify } from 'src/components/iconify';
 import { EmptyContent } from 'src/components/empty-content';
+import { useLoginModal } from 'src/components/auth/LoginFormDialog/action';
+
+import { useAuthContext } from 'src/auth/hooks';
 
 import { useCheckoutContext } from './context';
 import { CheckoutSummary } from './checkout-summary';
@@ -30,7 +37,10 @@ export function CheckoutCart() {
     onChangeItemQuantity,
   } = useCheckoutContext();
 
+  const { checkoutItems } = useCheckoutItems(checkoutState);
   const isCartEmpty = !checkoutState.items.length;
+  const { showLogin } = useLoginModal();
+  const { authenticated } = useAuthContext();
 
   const renderLoading = () => (
     <Box
@@ -47,8 +57,8 @@ export function CheckoutCart() {
 
   const renderEmpty = () => (
     <EmptyContent
-      title="Cart is empty!"
-      description="Look like you have no items in your shopping cart."
+      title="Giỏ hàng trống!"
+      description="Có vẻ như bạn không có sản phẩm nào trong giỏ hàng."
       imgUrl={`${CONFIG.assetsDir}/assets/icons/empty/ic-cart.svg`}
       sx={{ height: 340 }}
     />
@@ -61,9 +71,9 @@ export function CheckoutCart() {
           <CardHeader
             title={
               <Typography variant="h6">
-                {`Cart `}
+                {`Giỏ hàng `}
                 <Typography component="span" sx={{ color: 'text.secondary' }}>
-                  ({checkoutState.totalItems} items)
+                  ({checkoutState.totalItems} sản phẩm)
                 </Typography>
               </Typography>
             }
@@ -78,7 +88,7 @@ export function CheckoutCart() {
                 renderEmpty()
               ) : (
                 <CheckoutCartProductList
-                  checkoutState={checkoutState}
+                  checkoutItems={checkoutItems}
                   onDeleteCartItem={onDeleteCartItem}
                   onChangeItemQuantity={onChangeItemQuantity}
                 />
@@ -93,12 +103,12 @@ export function CheckoutCart() {
           color="inherit"
           startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
         >
-          Continue shopping
+          Tiếp tục mua sắm
         </Button>
       </Grid>
 
       <Grid size={{ xs: 12, md: 4 }}>
-        <CheckoutSummary checkoutState={checkoutState} onApplyDiscount={onApplyDiscount} />
+        <CheckoutSummary checkoutItems={checkoutItems} />
 
         <Button
           fullWidth
@@ -106,9 +116,15 @@ export function CheckoutCart() {
           type="submit"
           variant="contained"
           disabled={isCartEmpty}
-          onClick={() => onChangeStep('next')}
+          onClick={() => {
+            if (authenticated) {
+              onChangeStep('next');
+              return;
+            }
+            showLogin(() => onChangeStep('next'));
+          }}
         >
-          Check out
+          Thanh toán
         </Button>
       </Grid>
     </Grid>

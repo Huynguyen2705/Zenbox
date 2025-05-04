@@ -1,18 +1,15 @@
+import type { StoreProductVariant } from '@medusajs/types';
+
 import type { IAddressItem } from './common';
 
 // ----------------------------------------------------------------------
 
 export type ICheckoutItem = {
-  id: string;
-  name: string;
-  size: string;
-  price: number;
-  coverUrl: string;
-  colors: string[];
   quantity: number;
-  available: number;
-  subtotal?: number;
+  variantId: string;
+  productId: string;
 };
+export type ICheckoutViewItem = ICheckoutItem & StoreProductVariant
 
 export type ICheckoutDeliveryOption = {
   label: string;

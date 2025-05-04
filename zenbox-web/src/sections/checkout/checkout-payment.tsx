@@ -12,8 +12,15 @@ import Grid from '@mui/material/Grid2';
 import Button from '@mui/material/Button';
 import LoadingButton from '@mui/lab/LoadingButton';
 
+import { useCheckoutItems } from 'src/hooks/checkout';
+
+import { sdk } from 'src/lib/medusa';
+
 import { Form } from 'src/components/hook-form';
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
+
+import { getErrorMessage } from 'src/auth/utils';
 
 import { useCheckoutContext } from './context';
 import { CheckoutSummary } from './checkout-summary';
@@ -24,23 +31,23 @@ import { CheckoutPaymentMethods } from './checkout-payment-methods';
 // ----------------------------------------------------------------------
 
 const DELIVERY_OPTIONS: ICheckoutDeliveryOption[] = [
-  { value: 0, label: 'Free', description: '5-7 days delivery' },
-  { value: 10, label: 'Standard', description: '3-5 days delivery' },
-  { value: 20, label: 'Express', description: '2-3 days delivery' },
+  // { value: 0, label: 'Free', description: '5-7 days delivery' },
+  { value: 0, label: 'Giao hàng nhanh', description: 'Giao hàng trong vòng 3-5 ngày' },
+  // { value: 20, label: 'Express', description: '2-3 days delivery' },
 ];
 
 const PAYMENT_OPTIONS: ICheckoutPaymentOption[] = [
-  {
-    value: 'paypal',
-    label: 'Pay with Paypal',
-    description: 'You will be redirected to PayPal website to complete your purchase securely.',
-  },
-  {
-    value: 'creditcard',
-    label: 'Credit / Debit card',
-    description: 'We support Mastercard, Visa, Discover and Stripe.',
-  },
-  { value: 'cash', label: 'Cash', description: 'Pay with cash when your order is delivered.' },
+  // {
+  //   value: 'paypal',
+  //   label: 'Pay with Paypal',
+  //   description: 'You will be redirected to PayPal website to complete your purchase securely.',
+  // },
+  // {
+  //   value: 'creditcard',
+  //   label: 'Credit / Debit card',
+  //   description: 'We support Mastercard, Visa, Discover and Stripe.',
+  // },
+  { value: 'cash', label: 'Tiền mặt', description: 'Thanh toán bằng tiền mặt khi đơn hàng của bạn được giao.' },
 ];
 
 const CARD_OPTIONS: ICheckoutCardOption[] = [
@@ -70,9 +77,11 @@ export function CheckoutPayment() {
     state: checkoutState,
   } = useCheckoutContext();
 
+  const { checkoutItems } = useCheckoutItems(checkoutState)
+
   const defaultValues: PaymentSchemaType = {
-    delivery: checkoutState.shipping,
-    payment: '',
+    delivery: 0,
+    payment: 'cash',
   };
 
   const methods = useForm<PaymentSchemaType>({
@@ -87,10 +96,41 @@ export function CheckoutPayment() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      const { billing } = checkoutState;
       onResetCart();
+      const { cart } = await sdk.store.cart.create({
+        shipping_address: {
+          address_1: billing?.fullAddress,
+          last_name: billing?.name,
+          country_code: 'vn',
+          phone: billing?.phoneNumber,
+          city: billing?.city,
+          province: billing?.state
+        },
+        email: billing?.email,
+        items: checkoutState.items.map(item => ({
+          quantity: item.quantity,
+          variant_id: item.variantId,
+        })),
+
+      })
+      const { payment_providers } = await sdk.store.payment.listPaymentProviders(
+        {
+          region_id: cart.region_id!
+        }
+      );
+
+      await sdk.store.payment.initiatePaymentSession(cart, {
+        provider_id: payment_providers[0]?.id
+      })
+      const { shipping_options } = await sdk.store.fulfillment.listCartOptions({ cart_id: cart.id });
+      await sdk.store.cart.addShippingMethod(cart.id, {
+        option_id: shipping_options[0]?.id
+      })
+      await sdk.store.cart.complete(cart.id);
       onChangeStep('next');
-      console.info('DATA', data);
     } catch (error) {
+      toast.error(getErrorMessage(error))
       console.error(error);
     }
   });
@@ -117,7 +157,7 @@ export function CheckoutPayment() {
             onClick={() => onChangeStep('back')}
             startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
           >
-            Back
+            Quay lại
           </Button>
         </Grid>
 
@@ -128,7 +168,7 @@ export function CheckoutPayment() {
             checkoutState={checkoutState}
           />
 
-          <CheckoutSummary checkoutState={checkoutState} onEdit={() => onChangeStep('go', 0)} />
+          <CheckoutSummary checkoutItems={checkoutItems} onEdit={() => onChangeStep('go', 0)} />
 
           <LoadingButton
             fullWidth
@@ -137,7 +177,7 @@ export function CheckoutPayment() {
             variant="contained"
             loading={isSubmitting}
           >
-            Complete order
+            Hoàn tất đơn hàng
           </LoadingButton>
         </Grid>
       </Grid>

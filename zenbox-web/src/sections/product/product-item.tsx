@@ -14,6 +14,7 @@ import { fCurrency } from 'src/utils/format-number';
 import { getProductPrice } from 'src/utils/get-product-price';
 
 import { Image } from 'src/components/image';
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 
 import { useCheckoutContext } from '../checkout/context';
@@ -35,18 +36,18 @@ export function ProductItem({ product, detailsHref }: Props) {
   const available = 1;
   const { cheapestPrice: price, variantPrice } = getProductPrice({ product, variantId: variants?.[0].id })
   const handleAddCart = async () => {
-    // const newProduct = {
-    //   id,
-    //   name: title,
-    //   coverUrl,
-    //   available,
-    //   price,
-    //   colors: [colors[0]],
-    //   size: sizes[0],
-    //   quantity: 1,
-    // };
+
     try {
-      // onAddToCart(newProduct);
+      const variantId = variants?.[0].id;
+      if (!variantId) {
+        toast.error('Sản phẩm không hợp lệ')
+        return;
+      }
+      onAddToCart({
+        quantity: 1,
+        variantId,
+        productId: product.id,
+      });
     } catch (error) {
       console.error(error);
     }

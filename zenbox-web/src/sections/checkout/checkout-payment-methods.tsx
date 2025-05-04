@@ -39,7 +39,7 @@ export function CheckoutPaymentMethods({ name, options, sx, ...other }: Props) {
   return (
     <>
       <Card sx={sx} {...other}>
-        <CardHeader title="Payment" />
+        <CardHeader title="Phương thức thanh toán" />
 
         <Controller
           name={name}

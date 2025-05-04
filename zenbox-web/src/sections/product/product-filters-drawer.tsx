@@ -106,7 +106,7 @@ export function ProductFiltersDrawer({ open, onOpen, onClose, canReset, filters,
         }}
       >
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Filters
+          Bộ lọc
         </Typography>
 
         <Tooltip title="Reset">
@@ -249,7 +249,7 @@ export function ProductFiltersDrawer({ open, onOpen, onClose, canReset, filters,
         }
         onClick={onOpen}
       >
-        Filters
+        Lọc
       </Button>
 
       <Drawer

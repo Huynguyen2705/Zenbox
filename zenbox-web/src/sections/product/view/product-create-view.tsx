@@ -14,11 +14,10 @@ export function ProductCreateView() {
   return (
     <DashboardContent>
       <CustomBreadcrumbs
-        heading="Create a new product"
+        heading="Tạo sản phẩm"
         links={[
-          { name: 'Dashboard', href: paths.dashboard.root },
-          { name: 'Product', href: paths.dashboard.product.root },
-          { name: 'New product' },
+          { name: 'Trang chủ', href: paths.dashboard.root },
+          { name: 'Danh sách sản phẩm', href: paths.dashboard.product.root },
         ]}
         sx={{ mb: { xs: 3, md: 5 } }}
       />

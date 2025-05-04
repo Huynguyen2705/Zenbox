@@ -16,6 +16,7 @@ export function SettingsProvider({
   cookieSettings,
   defaultSettings,
   storageKey = SETTINGS_STORAGE_KEY,
+  regionId = process.env.NEXT_PUBLIC_REGION_ID
 }: SettingsProviderProps) {
   const isCookieEnabled = !!cookieSettings;
   const useStorage = isCookieEnabled ? useCookies : useLocalStorage;
@@ -23,7 +24,7 @@ export function SettingsProvider({
 
   const { state, setState, resetState, setField } = useStorage<SettingsState>(
     storageKey,
-    initialSettings
+    { ...initialSettings, regionId }
   );
 
   const [openDrawer, setOpenDrawer] = useState(false);

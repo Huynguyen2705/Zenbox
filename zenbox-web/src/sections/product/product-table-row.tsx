@@ -26,8 +26,8 @@ export function RenderCellPrice({ params }: ParamsProps) {
 
 export function RenderCellPublish({ params }: ParamsProps) {
   return (
-    <Label variant="soft" color={(params.row.publish === 'published' && 'info') || 'default'}>
-      {params.row.publish}
+    <Label variant="soft" color={(params.row.status === 'published' && 'info') || 'default'}>
+      {params.row.status}
     </Label>
   );
 }
@@ -78,8 +78,8 @@ export function RenderCellProduct({ params, href }: ParamsProps & { href: string
       }}
     >
       <Avatar
-        alt={params.row.name}
-        src={params.row.coverUrl}
+        alt={params.row.thumbnail}
+        src={params.row.thumbnail}
         variant="rounded"
         sx={{ width: 64, height: 64, mr: 2 }}
       />
@@ -95,7 +95,7 @@ export function RenderCellProduct({ params, href }: ParamsProps & { href: string
             variant="subtitle2"
             sx={{ cursor: 'pointer' }}
           >
-            {params.row.name}
+            {params.row.title}
           </Link>
         }
         secondary={

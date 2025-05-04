@@ -24,7 +24,7 @@ export function CheckoutDelivery({ name, options, onApplyShipping, sx, ...other 
 
   return (
     <Card sx={sx} {...other}>
-      <CardHeader title="Delivery" />
+      <CardHeader title="Vận chuyển" />
       <Controller
         name={name}
         control={control}
@@ -35,7 +35,7 @@ export function CheckoutDelivery({ name, options, onApplyShipping, sx, ...other 
               rowGap: 2.5,
               columnGap: 2,
               display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' },
+              gridTemplateColumns: { xs: 'repeat(1, 1fr)', },
             }}
           >
             {options.map((option) => (

@@ -43,7 +43,7 @@ export const SignInSchema = zod.object({
 
 export function LoginFormDialog() {
   const showPassword = useBoolean();
-  const { show, closeLogin } = useLoginModal();
+  const { show, closeLogin, onSuccess } = useLoginModal();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { checkUserSession } = useAuthContext();
   const defaultValues: SignInSchemaType = {
@@ -70,7 +70,9 @@ export function LoginFormDialog() {
         data
       );
       await checkUserSession?.();
+
       toast.success('Đăng nhập thành công!');
+      onSuccess?.();
       closeLogin();
     } catch (error) {
       console.error(error);

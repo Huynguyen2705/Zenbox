@@ -2,7 +2,6 @@ import type { DialogProps } from '@mui/material/Dialog';
 import type { CheckoutContextValue } from 'src/types/checkout';
 
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import Divider from '@mui/material/Divider';
@@ -48,20 +47,19 @@ export function CheckoutOrderComplete({ onResetCart, onDownloadPDF, ...other }: 
           flexDirection: 'column',
         }}
       >
-        <Typography variant="h4">Thank you for your purchase!</Typography>
+        <Typography variant="h4">Thanh toán thành công</Typography>
 
         <OrderCompleteIllustration />
 
         <Typography>
-          Thanks for placing order
+          Cảm ơn đơn hàng của bạn!
           <br />
           <br />
-          <Link>01dc1370-3df6-11eb-b378-0242ac130002</Link>
           <br />
           <br />
-          We will send you a notification within 5 days when it ships.
-          <br /> If you have any question or queries then fell to get in contact us. <br />
-          All the best,
+          Chúng tôi sẽ gửi cho bạn thông báo trong vòng 5 ngày khi hàng được giao.
+          <br />Nếu bạn có bất kỳ câu hỏi hoặc thắc mắc nào thì vui lòng liên hệ với chúng tôi. <br />
+          Chúc bạn mua sắm vui vẻ,
         </Typography>
 
         <Divider sx={{ width: 1, borderStyle: 'dashed' }} />
@@ -83,17 +81,17 @@ export function CheckoutOrderComplete({ onResetCart, onDownloadPDF, ...other }: 
             onClick={onResetCart}
             startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
           >
-            Continue shopping
+            Tiếp tục mua sắm
           </Button>
 
-          <Button
+          {/* <Button
             size="large"
             variant="contained"
             startIcon={<Iconify icon="eva:cloud-download-fill" />}
             onClick={onDownloadPDF}
           >
             Download as PDF
-          </Button>
+          </Button> */}
         </Box>
       </Box>
     </Dialog>

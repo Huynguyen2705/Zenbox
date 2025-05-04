@@ -12,11 +12,16 @@ export type IPaymentCard = {
 export type IAddressItem = {
   id?: string;
   name: string;
+  firstName: string;
+  lastName: string;
   company?: string;
   primary?: boolean;
   fullAddress: string;
   phoneNumber?: string;
   addressType?: string;
+  city?: string;
+  state?: string;
+  email?: string;
 };
 
 export type IDateValue = string | number | null;

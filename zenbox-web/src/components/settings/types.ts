@@ -9,6 +9,7 @@ export type SettingsState = {
   compactLayout?: boolean;
   direction?: ThemeDirection;
   colorScheme?: ThemeColorScheme;
+  regionId?: string;
   contrast?: 'default' | 'hight';
   navColor?: 'integrate' | 'apparent';
   navLayout?: 'vertical' | 'horizontal' | 'mini';
@@ -32,6 +33,7 @@ export type SettingsProviderProps = {
   defaultSettings: SettingsState;
   children: React.ReactNode;
   storageKey?: string;
+  regionId?: string;
 };
 
 export type SettingsDrawerProps = {

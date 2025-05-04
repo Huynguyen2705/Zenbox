@@ -6,7 +6,8 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid2';
 import Button from '@mui/material/Button';
 
-import { _addressBooks } from 'src/_mock';
+import { useAddressList } from 'src/hooks/address';
+import { useCheckoutItems } from 'src/hooks/checkout';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -18,24 +19,31 @@ import { AddressItem, AddressNewForm } from '../address';
 
 export function CheckoutBillingAddress() {
   const { onChangeStep, onCreateBillingAddress, state: checkoutState } = useCheckoutContext();
+  const { checkoutItems } = useCheckoutItems(checkoutState);
 
   const addressForm = useBoolean();
+  const { addAddress, addressList, removeAddress } = useAddressList();
 
   return (
     <>
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 8 }}>
-          {_addressBooks.slice(0, 4).map((address) => (
+          {addressList.slice(0, 4).map((address, index) => (
             <AddressItem
-              key={address.id}
+              key={index}
               address={address}
               action={
                 <Box sx={{ flexShrink: 0, display: 'flex', flexWrap: 'wrap' }}>
-                  {!address.primary && (
-                    <Button size="small" color="error" sx={{ mr: 1 }}>
-                      Delete
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => {
+                      removeAddress(address);
+                    }}
+                    size="small"
+                    color="error"
+                    sx={{ mr: 1 }}
+                  >
+                    Xóa
+                  </Button>
                   <Button
                     variant="outlined"
                     size="small"
@@ -44,7 +52,7 @@ export function CheckoutBillingAddress() {
                       onCreateBillingAddress(address);
                     }}
                   >
-                    Deliver to this address
+                    Giao đến địa chỉ này
                   </Button>
                 </Box>
               }
@@ -66,7 +74,7 @@ export function CheckoutBillingAddress() {
               onClick={() => onChangeStep('back')}
               startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
             >
-              Back
+              Quay lại
             </Button>
 
             <Button
@@ -75,13 +83,13 @@ export function CheckoutBillingAddress() {
               onClick={addressForm.onTrue}
               startIcon={<Iconify icon="mingcute:add-line" />}
             >
-              New address
+              Thêm địa chỉ
             </Button>
           </Box>
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <CheckoutSummary checkoutState={checkoutState} />
+          <CheckoutSummary checkoutItems={checkoutItems} />
         </Grid>
       </Grid>
 
@@ -89,8 +97,10 @@ export function CheckoutBillingAddress() {
         open={addressForm.value}
         onClose={addressForm.onFalse}
         onCreate={(address: IAddressItem) => {
-          onChangeStep('next');
-          onCreateBillingAddress(address);
+          // onChangeStep('next');
+          addAddress(address);
+
+          // onCreateBillingAddress(address);
         }}
       />
     </>

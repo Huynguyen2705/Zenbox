@@ -1,6 +1,7 @@
 'use client';
 
-import type { IProductItem } from 'src/types/product';
+
+import type { StoreProduct } from '@medusajs/types';
 
 import { paths } from 'src/routes/paths';
 
@@ -10,10 +11,11 @@ import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
 import { ProductNewEditForm } from '../product-new-edit-form';
 
+
 // ----------------------------------------------------------------------
 
 type Props = {
-  product?: IProductItem;
+  product?: StoreProduct;
 };
 
 export function ProductEditView({ product }: Props) {
@@ -23,9 +25,9 @@ export function ProductEditView({ product }: Props) {
         heading="Edit"
         backHref={paths.dashboard.product.root}
         links={[
-          { name: 'Dashboard', href: paths.dashboard.root },
-          { name: 'Product', href: paths.dashboard.product.root },
-          { name: product?.name },
+          { name: 'Trang chủ', href: paths.dashboard.root },
+          { name: 'Sản phẩm', href: paths.dashboard.product.root },
+          { name: product?.title },
         ]}
         sx={{ mb: { xs: 3, md: 5 } }}
       />

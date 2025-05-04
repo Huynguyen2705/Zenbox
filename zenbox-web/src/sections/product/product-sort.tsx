@@ -60,7 +60,7 @@ export function ProductSort({ sort, onSort, sortOptions }: Props) {
         }
         sx={{ fontWeight: 'fontWeightSemiBold' }}
       >
-        Sort by:
+        Sắp xếp:
         <Box component="span" sx={{ ml: 0.5, fontWeight: 'fontWeightBold' }}>
           {sortLabel}
         </Box>

@@ -52,8 +52,12 @@ export function NavList({ data, sx, ...other }: NavListProps) {
 
   const renderDropdown = () =>
     !!data.children && (
-      <NavDropdown open={open} onMouseEnter={handleOpenMenu} onMouseLeave={onClose}>
-        <Nav>
+      <NavDropdown sx={{
+
+      }} open={open}
+
+        onMouseEnter={handleOpenMenu} onMouseLeave={onClose}>
+        <Nav >
           <NavUl sx={{ gap: 3, flexDirection: 'row' }}>
             {data.children.map((list) => (
               <NavSubList key={list.subheader} subheader={list.subheader} data={list.items} />
@@ -92,7 +96,7 @@ function NavSubList({ data, subheader, sx, ...other }: NavSubListProps) {
       {...other}
     >
       <NavUl>
-        <NavLi
+        {/* <NavLi
           sx={(theme) => ({
             mb: 0.75,
             typography: 'overline',
@@ -100,7 +104,7 @@ function NavSubList({ data, subheader, sx, ...other }: NavSubListProps) {
           })}
         >
           {subheader}
-        </NavLi>
+        </NavLi> */}
 
         {data.map((item) =>
           isDashboard ? (

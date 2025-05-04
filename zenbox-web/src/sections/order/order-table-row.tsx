@@ -1,18 +1,17 @@
-import type { IOrderItem } from 'src/types/order';
+
+import type { StoreOrder } from '@medusajs/types';
 
 import { useBoolean, usePopover } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
+import { Tooltip } from '@mui/material';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import MenuList from '@mui/material/MenuList';
 import Collapse from '@mui/material/Collapse';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
-import Checkbox from '@mui/material/Checkbox';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
@@ -30,7 +29,7 @@ import { CustomPopover } from 'src/components/custom-popover';
 // ----------------------------------------------------------------------
 
 type Props = {
-  row: IOrderItem;
+  row: StoreOrder;
   selected: boolean;
   detailsHref: string;
   onSelectRow: () => void;
@@ -44,24 +43,13 @@ export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, details
 
   const renderPrimaryRow = () => (
     <TableRow hover selected={selected}>
-      <TableCell padding="checkbox">
-        <Checkbox
-          checked={selected}
-          onClick={onSelectRow}
-          inputProps={{
-            id: `${row.id}-checkbox`,
-            'aria-label': `${row.id} checkbox`,
-          }}
-        />
-      </TableCell>
-
-      <TableCell>
+      {/* <TableCell>
         <Link component={RouterLink} href={detailsHref} color="inherit" underline="always">
-          {row.orderNumber}
+          {`ORDER_${row.display_id}`}
         </Link>
-      </TableCell>
+      </TableCell> */}
 
-      <TableCell>
+      {/* <TableCell>
         <Box sx={{ gap: 2, display: 'flex', alignItems: 'center' }}>
           <Avatar alt={row.customer.name} src={row.customer.avatarUrl} />
 
@@ -73,20 +61,42 @@ export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, details
             </Box>
           </Stack>
         </Box>
-      </TableCell>
+      </TableCell> */}
 
       <TableCell>
         <ListItemText
-          primary={fDate(row.createdAt)}
-          secondary={fTime(row.createdAt)}
+          primary={fDate(row.created_at)}
+          secondary={fTime(row.created_at)}
           primaryTypographyProps={{ typography: 'body2', noWrap: true }}
           secondaryTypographyProps={{ mt: 0.5, component: 'span', typography: 'caption' }}
         />
       </TableCell>
 
-      <TableCell align="center"> {row.totalQuantity} </TableCell>
+      <TableCell align="right"> {fCurrency(row.total)} </TableCell>
 
-      <TableCell> {fCurrency(row.subtotal)} </TableCell>
+      <TableCell>
+        <Tooltip content={row.shipping_address?.address_1} title={row.shipping_address?.address_1}>
+          <ListItemText
+            primary={'Sđt: ' + (row.shipping_address?.phone ?? '--')}
+            secondary={'D/c: ' + (row.shipping_address?.address_1 ?? '--')}
+            primaryTypographyProps={{ typography: 'body2', noWrap: true }}
+            secondaryTypographyProps={{
+              mt: 0.5,
+              component: 'span',
+              typography: 'caption',
+              sx(theme) {
+                return {
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  WebkitLineClamp: 1,
+                  whiteSpace: 'nowrap',
+                  maxWidth: '350px',
+                };
+              },
+            }}
+          />
+        </Tooltip>
+      </TableCell>
 
       <TableCell>
         <Label
@@ -128,7 +138,7 @@ export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, details
           sx={{ bgcolor: 'background.neutral' }}
         >
           <Paper sx={{ m: 1.5 }}>
-            {row.items.map((item) => (
+            {row.items?.map((item) => (
               <Box
                 key={item.id}
                 sx={(theme) => ({
@@ -141,21 +151,21 @@ export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, details
                 })}
               >
                 <Avatar
-                  src={item.coverUrl}
+                  src={item.thumbnail ?? ''}
                   variant="rounded"
                   sx={{ width: 48, height: 48, mr: 2 }}
                 />
 
                 <ListItemText
-                  primary={item.name}
-                  secondary={item.sku}
+                  primary={item.title}
+                  secondary={item.subtitle}
                   primaryTypographyProps={{ typography: 'body2' }}
                   secondaryTypographyProps={{ component: 'span', color: 'text.disabled', mt: 0.5 }}
                 />
 
                 <div>x{item.quantity} </div>
 
-                <Box sx={{ width: 110, textAlign: 'right' }}>{fCurrency(item.price)}</Box>
+                <Box sx={{ width: 110, textAlign: 'right' }}>{fCurrency(item.unit_price)}</Box>
               </Box>
             ))}
           </Paper>
@@ -180,13 +190,13 @@ export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, details
           sx={{ color: 'error.main' }}
         >
           <Iconify icon="solar:trash-bin-trash-bold" />
-          Delete
+          Huỷ đơn hàng
         </MenuItem>
 
         <li>
           <MenuItem component={RouterLink} href={detailsHref} onClick={() => menuActions.onClose()}>
             <Iconify icon="solar:eye-bold" />
-            View
+            Đã nhận được hàng
           </MenuItem>
         </li>
       </MenuList>
@@ -197,11 +207,11 @@ export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, details
     <ConfirmDialog
       open={confirmDialog.value}
       onClose={confirmDialog.onFalse}
-      title="Delete"
-      content="Are you sure want to delete?"
+      title="Huỷ đơn hàng"
+      content="Bạn có chắc chắn muốn huỷ đơn hàng này không?"
       action={
         <Button variant="contained" color="error" onClick={onDeleteRow}>
-          Delete
+          Huỷ đơn
         </Button>
       }
     />

@@ -1,12 +1,12 @@
-import type { IProductItem } from 'src/types/product';
+
+import type { StoreProduct, AdminFileListResponse } from '@medusajs/types';
 
 import { z as zod } from 'zod';
-import { useForm } from 'react-hook-form';
-import { useState, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useEffect, useCallback } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
@@ -14,21 +14,18 @@ import Divider from '@mui/material/Divider';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
-import InputAdornment from '@mui/material/InputAdornment';
+import { Chip, Button, IconButton } from '@mui/material';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import {
-  _tags,
-  PRODUCT_SIZE_OPTIONS,
-  PRODUCT_GENDER_OPTIONS,
-  PRODUCT_COLOR_NAME_OPTIONS,
-  PRODUCT_CATEGORY_GROUP_OPTIONS,
-} from 'src/_mock';
+import { useCategories } from 'src/hooks/common';
+
+import { sdk } from 'src/lib/medusa';
 
 import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------
@@ -36,101 +33,184 @@ import { Form, Field, schemaHelper } from 'src/components/hook-form';
 export type NewProductSchemaType = zod.infer<typeof NewProductSchema>;
 
 export const NewProductSchema = zod.object({
-  name: zod.string().min(1, { message: 'Name is required!' }),
+  title: zod.string().min(1, { message: 'Tên sản phẩm không được để trống' }),
   description: schemaHelper
-    .editor({ message: 'Description is required!' })
-    .min(100, { message: 'Description must be at least 100 characters' })
-    .max(500, { message: 'Description must be less than 500 characters' }),
+    .editor({ message: 'Mô tả không được để trống!' }),
   images: schemaHelper.files({ message: 'Images is required!' }),
-  code: zod.string().min(1, { message: 'Product code is required!' }),
-  sku: zod.string().min(1, { message: 'Product sku is required!' }),
-  quantity: schemaHelper.nullableInput(
-    zod.number({ coerce: true }).min(1, { message: 'Quantity is required!' }),
-    {
-      // message for null value
-      message: 'Quantity is required!',
-    }
-  ),
-  colors: zod.string().array().min(1, { message: 'Choose at least one option!' }),
-  sizes: zod.string().array().min(1, { message: 'Choose at least one option!' }),
-  tags: zod.string().array().min(2, { message: 'Must have at least 2 items!' }),
-  gender: zod.array(zod.string()).min(1, { message: 'Choose at least one option!' }),
-  price: schemaHelper.nullableInput(
-    zod.number({ coerce: true }).min(1, { message: 'Price is required!' }),
-    {
-      // message for null value
-      message: 'Price is required!',
-    }
-  ),
+
   // Not required
-  category: zod.string(),
-  subDescription: zod.string(),
-  taxes: zod.number({ coerce: true }).nullable(),
-  priceSale: zod.number({ coerce: true }).nullable(),
-  saleLabel: zod.object({ enabled: zod.boolean(), content: zod.string() }),
-  newLabel: zod.object({ enabled: zod.boolean(), content: zod.string() }),
+  subtitle: zod.string(),
+  status: zod.string().optional(),
+  categories: zod.array(zod.string()),
+  options: zod.array(zod.object({
+    title: zod.string(),
+    values: zod.array(zod.string()),
+  })),
+  variants: zod.array(zod.object({
+    title: zod.string(),
+    manage_inventory: zod.boolean().optional(),
+    prices: zod.array(zod.object({
+      currency_code: zod.string(),
+      amount: zod.number(),
+    })).optional(),
+    options: zod.any().optional(),
+  }))
 });
 
 // ----------------------------------------------------------------------
 
 type Props = {
-  currentProduct?: IProductItem;
+  currentProduct?: StoreProduct;
 };
 
 export function ProductNewEditForm({ currentProduct }: Props) {
   const router = useRouter();
+  const { categories } = useCategories(true);
 
   const [includeTaxes, setIncludeTaxes] = useState(false);
 
+
   const defaultValues: NewProductSchemaType = {
-    name: '',
+    title: '',
     description: '',
-    subDescription: '',
+    subtitle: '',
     images: [],
-    /********/
-    code: '',
-    sku: '',
-    price: null,
-    taxes: null,
-    priceSale: null,
-    quantity: null,
-    tags: [],
-    gender: [],
-    category: PRODUCT_CATEGORY_GROUP_OPTIONS[0].classify[1],
-    colors: [],
-    sizes: [],
-    newLabel: { enabled: false, content: '' },
-    saleLabel: { enabled: false, content: '' },
+    categories: [],
+    options: [
+      {
+        title: '',
+        values: []
+      }
+    ],
+    variants: []
   };
 
   const methods = useForm<NewProductSchemaType>({
     resolver: zodResolver(NewProductSchema),
     defaultValues,
-    values: currentProduct,
+    values: currentProduct && {
+      title: currentProduct.title!,
+      description: currentProduct.description!,
+      images: currentProduct.images?.map(item => item.url) ?? [],
+      subtitle: currentProduct.subtitle!,
+      categories: currentProduct.categories?.map(item => item.id) ?? [],
+      options: currentProduct.options?.map(item => ({
+        ...item,
+        values: item.values?.map(value => value.value) ?? []
+      })) ?? [],
+      variants: currentProduct.variants?.map(variant => ({
+        ...variant,
+        title: variant.title ?? '',
+        manage_inventory: !!variant.manage_inventory
+      })) ?? [],
+      status: currentProduct.status ?? 'draft'
+    },
   });
+
+  const generateVariants = (options: { title: string; values: string[] }[]) => {
+    if (options.length === 0) return [];
+
+    const optionsVariant = options.reduce((acc, option) => {
+      const { title, values } = option;
+      if (acc.length === 0) {
+        return values.map((value) => ({ [title]: value }));
+      }
+      return acc.flatMap((variant) =>
+        values.map((value) => ({
+          ...variant,
+          [title]: value,
+        }))
+      );
+    }, [] as Record<string, string>[]);
+    console.log({ optionsVariant, options })
+    return optionsVariant.map((item) => ({
+      options: item,
+      title: Object.entries(item).map(option => option[1]).join(', '),
+      manage_inventory: true,
+      prices: [{
+        currency_code: 'vnd',
+        amount: 0,
+      }],
+
+    }))
+  }
 
   const {
     reset,
     watch,
     setValue,
     handleSubmit,
+    control,
     formState: { isSubmitting },
   } = methods;
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "options",
 
+  });
   const values = watch();
+  useEffect(() => {
+    handleChangeOptions();
+  }, [values.options])
+
+  const handleChangeOptions = () => {
+    const newVariants = generateVariants(values.options).map((item, idx) => ({
+      ...item, prices: [{
+        amount: values.variants[idx]?.prices?.[0]?.amount ?? 0,
+        currency_code: values.variants[idx]?.prices?.[0]?.currency_code ?? 'vnd',
+      }]
+    }));
+
+    console.log({ options: values.options, newVariants, })
+    methods.setValue('variants', newVariants);
+  }
+
 
   const onSubmit = handleSubmit(async (data) => {
     const updatedData = {
       ...data,
-      taxes: includeTaxes ? defaultValues.taxes : data.taxes,
     };
 
+
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const shippingProfile = await sdk.admin.shippingProfile.list();
+      const saleChannel = await sdk.admin.salesChannel.list()
+      const imageNeedUpload = data.images.filter(item => typeof item !== 'string');
+      let images: AdminFileListResponse | null = null;
+      if (imageNeedUpload.length) {
+        images = await sdk.admin.upload.create({
+          files: data.images.filter(item => typeof item !== 'string'),
+        })
+      }
+
+      const payload = {
+        ...data,
+        title: data.title,
+        subtitle: data.subtitle as string,
+        description: data.description,
+        variants: data.variants ?? [],
+        images: [
+          ...data.images.filter(item => typeof item === 'string').map(url => ({ url })),
+          ...images?.files.map(item => ({ url: item.url })) ?? [],
+        ],
+        categories: data.categories.map(id => ({ id })),
+        shipping_profile_id: shippingProfile.shipping_profiles[0].id,
+        sales_channels: saleChannel.sales_channels,
+        status: data.status,
+      }
+      if (currentProduct) {
+        await sdk.admin.product.update(currentProduct.id, payload as any)
+      }
+      else {
+        await sdk.admin.product.create(payload as any, {
+          fields: '+variants.inventory_items'
+        })
+      }
+
       reset();
-      toast.success(currentProduct ? 'Update success!' : 'Create success!');
+      toast.success(currentProduct ? 'Cập nhật sản phẩm thành công' : 'Thêm mới sản phẩm thành công');
       router.push(paths.dashboard.product.root);
-      console.info('DATA', updatedData);
     } catch (error) {
       console.error(error);
     }
@@ -148,28 +228,33 @@ export function ProductNewEditForm({ currentProduct }: Props) {
     setValue('images', [], { shouldValidate: true });
   }, [setValue]);
 
-  const handleChangeIncludeTaxes = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setIncludeTaxes(event.target.checked);
-  }, []);
-
   const renderDetails = () => (
     <Card>
-      <CardHeader title="Details" subheader="Title, short description, image..." sx={{ mb: 3 }} />
+      <CardHeader title="Chi tiết" subheader="Title, short description, image..." sx={{ mb: 3 }} />
 
       <Divider />
 
       <Stack spacing={3} sx={{ p: 3 }}>
-        <Field.Text name="name" label="Product name" />
+        <Field.Text name="title" label="Tên sản phẩm" />
 
-        <Field.Text name="subDescription" label="Sub description" multiline rows={4} />
+        <Field.Text name="subtitle" label="Tóm tắt" multiline rows={4} />
 
+        <Field.MultiSelect
+          checkbox
+          name="categories"
+          label="Danh mục"
+          options={categories.map(item => ({
+            label: item.name,
+            value: item.id
+          }))}
+        />
         <Stack spacing={1.5}>
-          <Typography variant="subtitle2">Content</Typography>
+          <Typography variant="subtitle2">Mô tả</Typography>
           <Field.Editor name="description" sx={{ maxHeight: 480 }} />
         </Stack>
 
         <Stack spacing={1.5}>
-          <Typography variant="subtitle2">Images</Typography>
+          <Typography variant="subtitle2">Hỉnh ảnh</Typography>
           <Field.Upload
             multiple
             thumbnail
@@ -184,199 +269,100 @@ export function ProductNewEditForm({ currentProduct }: Props) {
     </Card>
   );
 
-  const renderProperties = () => (
-    <Card>
-      <CardHeader
-        title="Properties"
-        subheader="Additional functions and attributes..."
-        sx={{ mb: 3 }}
-      />
-
-      <Divider />
-
-      <Stack spacing={3} sx={{ p: 3 }}>
-        <Box
-          sx={{
-            rowGap: 3,
-            columnGap: 2,
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' },
-          }}
-        >
-          <Field.Text name="code" label="Product code" />
-
-          <Field.Text name="sku" label="Product SKU" />
-
-          <Field.Text
-            name="quantity"
-            label="Quantity"
-            placeholder="0"
-            type="number"
-            slotProps={{ inputLabel: { shrink: true } }}
-          />
-
-          <Field.Select
-            name="category"
-            label="Category"
-            slotProps={{
-              select: { native: true },
-              inputLabel: { shrink: true },
-            }}
-          >
-            {PRODUCT_CATEGORY_GROUP_OPTIONS.map((category) => (
-              <optgroup key={category.group} label={category.group}>
-                {category.classify.map((classify) => (
-                  <option key={classify} value={classify}>
-                    {classify}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </Field.Select>
-
-          <Field.MultiSelect
-            checkbox
-            name="colors"
-            label="Colors"
-            options={PRODUCT_COLOR_NAME_OPTIONS}
-          />
-
-          <Field.MultiSelect checkbox name="sizes" label="Sizes" options={PRODUCT_SIZE_OPTIONS} />
-        </Box>
-
-        <Field.Autocomplete
-          name="tags"
-          label="Tags"
-          placeholder="+ Tags"
-          multiple
-          freeSolo
-          disableCloseOnSelect
-          options={_tags.map((option) => option)}
-          getOptionLabel={(option) => option}
-          renderOption={(props, option) => (
-            <li {...props} key={option}>
-              {option}
-            </li>
-          )}
-          renderTags={(selected, getTagProps) =>
-            selected.map((option, index) => (
-              <Chip
-                {...getTagProps({ index })}
-                key={option}
-                label={option}
-                size="small"
-                color="info"
-                variant="soft"
-              />
-            ))
-          }
-        />
-
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">Gender</Typography>
-          <Field.MultiCheckbox row name="gender" options={PRODUCT_GENDER_OPTIONS} sx={{ gap: 2 }} />
-        </Stack>
-
-        <Divider sx={{ borderStyle: 'dashed' }} />
-
-        <Box sx={{ gap: 3, display: 'flex', alignItems: 'center' }}>
-          <Field.Switch name="saleLabel.enabled" label={null} sx={{ m: 0 }} />
-          <Field.Text
-            name="saleLabel.content"
-            label="Sale label"
-            fullWidth
-            disabled={!values.saleLabel.enabled}
-          />
-        </Box>
-
-        <Box sx={{ gap: 3, display: 'flex', alignItems: 'center' }}>
-          <Field.Switch name="newLabel.enabled" label={null} sx={{ m: 0 }} />
-          <Field.Text
-            name="newLabel.content"
-            label="New label"
-            fullWidth
-            disabled={!values.newLabel.enabled}
-          />
-        </Box>
-      </Stack>
-    </Card>
-  );
 
   const renderPricing = () => (
     <Card>
-      <CardHeader title="Pricing" subheader="Price related inputs" sx={{ mb: 3 }} />
-
+      <CardHeader action={<Button variant='contained' onClick={() => {
+        methods.setValue('options', [...values.options, { title: '', values: [] }])
+      }}>Thêm</Button>} title="Tuỳ chọn sản phẩm" subheader="Xác định các tuỳ chọn cho sản phẩm, ví dụ: Ram, CPU, màu sắc" sx={{ mb: 3 }} />
       <Divider />
-
       <Stack spacing={3} sx={{ p: 3 }}>
-        <Field.Text
-          name="price"
-          label="Regular price"
-          placeholder="0.00"
-          type="number"
-          slotProps={{
-            inputLabel: { shrink: true },
-            input: {
-              startAdornment: (
-                <InputAdornment position="start" sx={{ mr: 0.75 }}>
-                  <Box component="span" sx={{ color: 'text.disabled' }}>
-                    $
-                  </Box>
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-
-        <Field.Text
-          name="priceSale"
-          label="Sale price"
-          placeholder="0.00"
-          type="number"
-          slotProps={{
-            inputLabel: { shrink: true },
-            input: {
-              startAdornment: (
-                <InputAdornment position="start" sx={{ mr: 0.75 }}>
-                  <Box component="span" sx={{ color: 'text.disabled' }}>
-                    $
-                  </Box>
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-
-        <FormControlLabel
-          control={
-            <Switch id="toggle-taxes" checked={includeTaxes} onChange={handleChangeIncludeTaxes} />
-          }
-          label="Price includes taxes"
-        />
-
-        {!includeTaxes && (
-          <Field.Text
-            name="taxes"
-            label="Tax (%)"
-            placeholder="0.00"
-            type="number"
-            slotProps={{
-              inputLabel: { shrink: true },
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start" sx={{ mr: 0.75 }}>
-                    <Box component="span" sx={{ color: 'text.disabled' }}>
-                      %
-                    </Box>
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-        )}
+        {values.options.map((item, idx) => <Box display="flex" gap={2} alignItems="center" key={idx}>
+          <Box flex={1}>
+            <Field.Text
+              sx={{ mb: 2 }}
+              name={`options.${idx}.title`}
+              label="Tên"
+              placeholder="Tên tuỳ chọn"
+            />
+            <Field.Autocomplete
+              name={`options.${idx}.values`}
+              label="Giá trị"
+              placeholder=""
+              multiple
+              freeSolo
+              disableCloseOnSelect
+              options={[]}
+              value={item.values}
+              onChange={(e, value) => {
+                const newOptions = values.options.map((option, mapIdx) => {
+                  if (mapIdx === idx) {
+                    return {
+                      ...option,
+                      values: value
+                    }
+                  }
+                  return option;
+                })
+                console.log(newOptions);
+                methods.setValue(`options`, newOptions);
+              }}
+              // options={_tags.map((option) => option)}
+              getOptionLabel={(option) => option}
+              renderOption={(props, option) => (
+                <li {...props} key={option}>
+                  {option}
+                </li>
+              )}
+              renderTags={(selected, getTagProps) =>
+                selected.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option}
+                    label={option}
+                    size="small"
+                    color="info"
+                    variant="soft"
+                  />
+                ))
+              }
+            />
+          </Box>
+          <IconButton onClick={() => {
+            remove(idx)
+          }} disabled={values.options.length <= 1} color='error'><Iconify icon="solar:trash-bin-trash-bold" /></IconButton>
+        </Box>)}
       </Stack>
     </Card>
   );
+
+  const renderPricingVariants = () => {
+    if (values.options.length < 1) {
+      return null;
+    }
+    return (
+      <Card>
+        <CardHeader title="Giá" subheader="Xác định giá cho các tuỳ chọn cho sản phẩm" sx={{ mb: 3 }} />
+        <Divider />
+        <Stack spacing={3} sx={{ p: 3 }}>
+          {values.variants.map((item, idx) => <Box display="flex" gap={2} alignItems="center" key={idx}>
+            <Box display="flex" gap={2} flex={1}>
+              <Field.Text
+                sx={{ mb: 2, width: '20rem' }}
+                name={`variants.${idx}.title`}
+                label="Tên hiển thị"
+              />
+              <Field.Numeric
+                sx={{ mb: 2, flex: 1 }}
+                name={`variants.${idx}.prices.0.amount`}
+                label="Giá"
+              />
+            </Box>
+          </Box>)}
+        </Stack>
+      </Card>
+    )
+  };
 
   const renderActions = () => (
     <Box
@@ -388,13 +374,18 @@ export function ProductNewEditForm({ currentProduct }: Props) {
       }}
     >
       <FormControlLabel
-        label="Publish"
-        control={<Switch defaultChecked inputProps={{ id: 'publish-switch' }} />}
+        label="Đăng"
+        control={<Switch
+          onChange={(_, checked) => {
+            methods.setValue('status', checked ? 'published' : 'draft')
+          }}
+          checked={values.status === 'published'}
+          defaultChecked inputProps={{ id: 'publish-switch' }} />}
         sx={{ pl: 3, flexGrow: 1 }}
       />
 
       <LoadingButton type="submit" variant="contained" size="large" loading={isSubmitting}>
-        {!currentProduct ? 'Create product' : 'Save changes'}
+        {!currentProduct ? 'Tạo product' : 'Lưu thay đổi'}
       </LoadingButton>
     </Box>
   );
@@ -403,8 +394,9 @@ export function ProductNewEditForm({ currentProduct }: Props) {
     <Form methods={methods} onSubmit={onSubmit}>
       <Stack spacing={{ xs: 3, md: 5 }} sx={{ mx: 'auto', maxWidth: { xs: 720, xl: 880 } }}>
         {renderDetails()}
-        {renderProperties()}
+        {/* {renderProperties()} */}
         {renderPricing()}
+        {renderPricingVariants()}
         {renderActions()}
       </Stack>
     </Form>

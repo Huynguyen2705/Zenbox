@@ -55,7 +55,7 @@ export function ProductShopDetailsView({ product }: Props) {
   const { state: checkoutState, onAddToCart } = useCheckoutContext();
 
   const tabs = useTabs('description');
-
+  console.log({ product })
   return (
     <Container sx={{ mt: 5, mb: 10 }}>
       <CartIcon totalItems={checkoutState.totalItems} />

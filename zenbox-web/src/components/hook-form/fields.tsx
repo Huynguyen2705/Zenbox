@@ -2,6 +2,7 @@ import { RHFCode } from './rhf-code';
 import { RHFRating } from './rhf-rating';
 import { RHFEditor } from './rhf-editor';
 import { RHFSlider } from './rhf-slider';
+import { RHFNumberic } from './rhf-numberic';
 import { RHFTextField } from './rhf-text-field';
 import { RHFRadioGroup } from './rhf-radio-group';
 import { RHFPhoneInput } from './rhf-phone-input';
@@ -38,4 +39,5 @@ export const Field = {
   MultiCheckbox: RHFMultiCheckbox,
   CountrySelect: RHFCountrySelect,
   MobileDateTimePicker: RHFMobileDateTimePicker,
+  Numeric: RHFNumberic,
 };

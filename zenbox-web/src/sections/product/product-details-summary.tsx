@@ -45,7 +45,6 @@ export function ProductDetailsSummary({
     variants
   } = product;
 
-  const existProduct = !!items?.length && items.map((item) => item.id).includes(id);
 
   const isMaxQuantity = Number.MAX_SAFE_INTEGER
   // !!items?.length &&
@@ -58,7 +57,8 @@ export function ProductDetailsSummary({
     available: 1000,
     price: 1000,
     quantity: 1,
-    options: []
+    options: [],
+    selectedVariant: variants?.[0]?.id
   };
 
   const methods = useForm<typeof defaultValues>({
@@ -68,13 +68,18 @@ export function ProductDetailsSummary({
   const { watch, control, setValue, handleSubmit } = methods;
 
   const values = watch();
+  const existProduct = !!items?.length && items.map((item) => item.variantId).includes(values.selectedVariant ?? '');
 
   const onSubmit = handleSubmit(async (data) => {
     console.info('DATA', JSON.stringify(data, null, 2));
 
     try {
       if (!existProduct) {
-        // onAddToCart?.({ ...data, colors: [values.colors] });
+        onAddToCart?.({
+          productId: product.id,
+          variantId: values.selectedVariant as string,
+          quantity: values.quantity
+        });
       }
       router.push(paths.product.checkout);
     } catch (error) {
@@ -84,16 +89,16 @@ export function ProductDetailsSummary({
 
   const handleAddCart = useCallback(() => {
     try {
-      // onAddToCart?.({
-      //   ...values,
-      //   colors: [values.colors],
-      //   subtotal: values.price * values.quantity,
-      // });
+      onAddToCart?.({
+        productId: product.id,
+        variantId: values.selectedVariant as string,
+        quantity: values.quantity
+      });
     } catch (error) {
       console.error(error);
     }
   }, [onAddToCart, values]);
-  const { cheapestPrice: price, variantPrice } = getProductPrice({ product, variantId: product.variants?.[0].id })
+  const { cheapestPrice: price, variantPrice } = getProductPrice({ product, variantId: values.selectedVariant })
 
   const renderPrice = () => (
     <Box sx={{ typography: 'h5' }}>
@@ -106,34 +111,32 @@ export function ProductDetailsSummary({
         </Box>
       )} */}
 
-      {fCurrency(price?.calculated_price_number)}
+      {fCurrency(variantPrice?.calculated_price_number ?? price?.calculated_price_number)}
     </Box>
   );
 
-  const renderOptions = () => options?.map((option, index) => (
-    <Box key={index} mb={2}>
-      <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>{option.title}</Typography>
-      <Controller
-        name={`options.${index}` as any} // access as selections[0], selections[1]
-        control={control}
-        render={({ field }) => (
-          <ToggleButtonGroup
-            exclusive
-            value={field.value}
-            onChange={(_, value) => {
-              if (value !== null) field.onChange(value);
-            }}
-          >
-            {option.values?.map((choice) => (
-              <ToggleButton key={choice.id} value={choice.id}>
-                {choice.value}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        )}
-      />
-    </Box>
-  ))
+  const renderOptions = () => <Box mb={2}>
+    <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>Tuỳ chọn</Typography>
+    <Controller
+      name="selectedVariant" // access as selections[0], selections[1]
+      control={control}
+      render={({ field }) => (
+        <ToggleButtonGroup
+          exclusive
+          value={field.value}
+          onChange={(_, value) => {
+            if (value !== null) field.onChange(value);
+          }}
+        >
+          {variants?.map((choice) => (
+            <ToggleButton key={choice.id} value={choice.id}>
+              {choice.title}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      )}
+    />
+  </Box>
 
 
   const renderColorOptions = () => (
