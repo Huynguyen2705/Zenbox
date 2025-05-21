@@ -3,10 +3,9 @@ import { _mock } from './_mock';
 // ----------------------------------------------------------------------
 
 export const ORDER_STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'refunded', label: 'Refunded' },
+  { value: 'pending', label: 'Đang xử lý' },
+  { value: 'completed', label: 'Đã hoàn thành' },
+  { value: 'canceled', label: 'Đã huỷ' },
 ];
 
 const ITEMS = Array.from({ length: 3 }, (_, index) => ({

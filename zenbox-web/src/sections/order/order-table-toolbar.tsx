@@ -8,9 +8,6 @@ import { usePopover } from 'minimal-shared/hooks';
 import Box from '@mui/material/Box';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
-import TextField from '@mui/material/TextField';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { formHelperTextClasses } from '@mui/material/FormHelperText';
 
@@ -93,7 +90,7 @@ export function OrderTableToolbar({ filters, onResetPage, dateError }: Props) {
         }}
       >
         <DatePicker
-          label="Start date"
+          label="Từ ngày"
           value={currentFilters.startDate}
           onChange={handleFilterStartDate}
           slotProps={{ textField: { fullWidth: true } }}
@@ -101,7 +98,7 @@ export function OrderTableToolbar({ filters, onResetPage, dateError }: Props) {
         />
 
         <DatePicker
-          label="End date"
+          label="Đến ngày"
           value={currentFilters.endDate}
           onChange={handleFilterEndDate}
           slotProps={{
@@ -120,35 +117,7 @@ export function OrderTableToolbar({ filters, onResetPage, dateError }: Props) {
           }}
         />
 
-        <Box
-          sx={{
-            gap: 2,
-            width: 1,
-            flexGrow: 1,
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
-          <TextField
-            fullWidth
-            value={currentFilters.name}
-            onChange={handleFilterName}
-            placeholder="Search customer or order number..."
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
 
-          <IconButton onClick={menuActions.onOpen}>
-            <Iconify icon="eva:more-vertical-fill" />
-          </IconButton>
-        </Box>
       </Box>
 
       {renderMenuActions()}

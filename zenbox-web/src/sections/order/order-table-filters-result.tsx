@@ -8,6 +8,8 @@ import Chip from '@mui/material/Chip';
 
 import { fDateRangeShortLabel } from 'src/utils/format-time';
 
+import { ORDER_STATUS_OPTIONS } from 'src/_mock';
+
 import { chipProps, FiltersBlock, FiltersResult } from 'src/components/filters-result';
 
 // ----------------------------------------------------------------------
@@ -42,17 +44,17 @@ export function OrderTableFiltersResult({ filters, totalResults, onResetPage, sx
 
   return (
     <FiltersResult totalResults={totalResults} onReset={handleReset} sx={sx}>
-      <FiltersBlock label="Status:" isShow={currentFilters.status !== 'all'}>
+      <FiltersBlock label="Trạng thái:" isShow={currentFilters.status !== 'all'}>
         <Chip
           {...chipProps}
-          label={currentFilters.status}
+          label={ORDER_STATUS_OPTIONS.find(item => item.value === currentFilters.status)?.label ?? currentFilters.status}
           onDelete={handleRemoveStatus}
           sx={{ textTransform: 'capitalize' }}
         />
       </FiltersBlock>
 
       <FiltersBlock
-        label="Date:"
+        label="Ngày:"
         isShow={Boolean(currentFilters.startDate && currentFilters.endDate)}
       >
         <Chip

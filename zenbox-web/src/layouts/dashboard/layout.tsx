@@ -19,7 +19,6 @@ import { VerticalDivider } from './content';
 import { NavVertical } from './nav-vertical';
 import { layoutClasses } from '../core/classes';
 import { NavHorizontal } from './nav-horizontal';
-import { _account } from '../nav-config-account';
 import { MainSection } from '../core/main-section';
 import { MenuButton } from '../components/menu-button';
 import { HeaderSection } from '../core/header-section';
@@ -141,7 +140,7 @@ export function DashboardLayout({
           {/* <SettingsButton /> */}
 
           {/** @slot Account drawer */}
-          <AccountDrawer data={_account} />
+          <AccountDrawer data={[]} />
         </Box>
       ),
     };

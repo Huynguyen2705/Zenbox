@@ -62,7 +62,7 @@ async function getAppConfig() {
       i18nLang: lang ?? 'en',
       cookieSettings: settings,
       dir: settings.direction,
-      regionId: regions[0].id
+      regionId: regions[0]?.id
     };
   }
 }

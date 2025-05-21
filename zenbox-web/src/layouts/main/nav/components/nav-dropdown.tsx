@@ -27,14 +27,13 @@ export const NavDropdown = styled(({ open, children, ...other }: NavDropdownProp
     </div>
   </Fade>
 ))(({ theme }) => ({
-  left: 0,
+  left: -10,
   right: 0,
-  marginTop: 12,
+
   width: '100%',
-  position: 'fixed',
-  marginLeft: 'auto',
-  marginRight: 'auto',
-  padding: theme.spacing(1.5),
+  position: 'absolute',
+  padding: 2,
+  minWidth: 200,
   zIndex: theme.zIndex.drawer * 2,
   maxWidth: theme.breakpoints.values.lg,
   top: 'calc(var(--layout-header-desktop-height) / 2)',

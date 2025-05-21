@@ -1,9 +1,11 @@
 'use client';
 
+import type { OrderStatus } from '@medusajs/types';
+import type { IOrderTableFilters } from 'src/types/order';
 import type { TableHeadCellProps } from 'src/components/table';
-import type { IOrderItem, IOrderTableFilters } from 'src/types/order';
 
-import { useState, useCallback } from 'react';
+import useSWR from 'swr';
+import { useMemo, useCallback } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { useBoolean, useSetState } from 'minimal-shared/hooks';
 
@@ -13,35 +15,29 @@ import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
 import TableBody from '@mui/material/TableBody';
-import IconButton from '@mui/material/IconButton';
 
 import { paths } from 'src/routes/paths';
 
-import { fIsAfter, fIsBetween } from 'src/utils/format-time';
+import { fIsAfter } from 'src/utils/format-time';
 
+import { sdk } from 'src/lib/medusa';
+import { ORDER_STATUS_OPTIONS } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { _orders, ORDER_STATUS_OPTIONS } from 'src/_mock';
 
-import { Label } from 'src/components/label';
-import { toast } from 'src/components/snackbar';
-import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 import {
   useTable,
   emptyRows,
-  rowInPage,
   TableNoData,
-  getComparator,
   TableEmptyRows,
   TableHeadCustom,
-  TableSelectedAction,
   TablePaginationCustom,
 } from 'src/components/table';
 
+import { OrderTableRow } from '../order-table-row';
 import { OrderTableToolbar } from '../order-table-toolbar';
 import { OrderTableFiltersResult } from '../order-table-filters-result';
 
@@ -50,12 +46,11 @@ import { OrderTableFiltersResult } from '../order-table-filters-result';
 const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...ORDER_STATUS_OPTIONS];
 
 const TABLE_HEAD: TableHeadCellProps[] = [
-  { id: 'orderNumber', label: 'Order', width: 88 },
-  { id: 'name', label: 'Customer' },
-  { id: 'createdAt', label: 'Date', width: 140 },
-  { id: 'totalQuantity', label: 'Items', width: 120, align: 'center' },
-  { id: 'totalAmount', label: 'Price', width: 140 },
-  { id: 'status', label: 'Status', width: 110 },
+  { id: 'createdAt', label: 'Thời gian', width: 140 },
+  // { id: 'totalQuantity', label: 'Sản phẩm', width: 120, align: 'center' },
+  { id: 'totalAmount', label: 'Tổng tiền', width: 140, align: 'right' },
+  { id: 'address', label: 'Địa chỉ', width: 140 },
+  { id: 'status', label: 'Trạng thái', width: 110 },
   { id: '', width: 88 },
 ];
 
@@ -63,11 +58,9 @@ const TABLE_HEAD: TableHeadCellProps[] = [
 
 export function OrderListView() {
   const table = useTable({ defaultOrderBy: 'orderNumber' });
-
-  const confirmDialog = useBoolean();
-
-  const [tableData, setTableData] = useState<IOrderItem[]>(_orders);
-
+  const limit = table.rowsPerPage;
+  const currentPage = table.page
+  const offset = useMemo(() => currentPage * limit, [currentPage])
   const filters = useSetState<IOrderTableFilters>({
     name: '',
     status: 'all',
@@ -75,47 +68,38 @@ export function OrderListView() {
     endDate: null,
   });
   const { state: currentFilters, setState: updateFilters } = filters;
+  const { data: orderRequest, mutate } = useSWR(['admin/order', limit, offset, currentFilters.status, currentFilters.startDate && currentFilters.endDate ? `${currentFilters.endDate.toISOString()}${currentFilters.startDate.toISOString()}` : null,], async () => {
+    const res = await sdk.admin.order.list({
+      fields: '+shipping_address.address_1,+shipping_address.phone',
+      limit, offset,
+      ...currentFilters.status !== 'all' && {
+        status: currentFilters.status as OrderStatus
+      },
+      ...currentFilters.startDate && currentFilters.endDate && {
+        created_at: {
+          $gte: currentFilters.startDate.startOf('day').toISOString(),
+          $lte: currentFilters.endDate.endOf('day').toISOString()
+        }
+      }
+    });
+    return res;
+  })
+
+  const { orders, count } = orderRequest ?? {};
+
+  const confirmDialog = useBoolean();
+  const completeDialog = useBoolean();
+
+
 
   const dateError = fIsAfter(currentFilters.startDate, currentFilters.endDate);
-
-  const dataFiltered = applyFilter({
-    inputData: tableData,
-    comparator: getComparator(table.order, table.orderBy),
-    filters: currentFilters,
-    dateError,
-  });
-
-  const dataInPage = rowInPage(dataFiltered, table.page, table.rowsPerPage);
 
   const canReset =
     !!currentFilters.name ||
     currentFilters.status !== 'all' ||
     (!!currentFilters.startDate && !!currentFilters.endDate);
 
-  const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
-
-  const handleDeleteRow = useCallback(
-    (id: string) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
-
-      toast.success('Delete success!');
-
-      setTableData(deleteRow);
-
-      table.onUpdatePageDeleteRow(dataInPage.length);
-    },
-    [dataInPage.length, table, tableData]
-  );
-
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
-
-    toast.success('Delete success!');
-
-    setTableData(deleteRows);
-
-    table.onUpdatePageDeleteRows(dataInPage.length, dataFiltered.length);
-  }, [dataFiltered.length, dataInPage.length, table, tableData]);
+  const notFound = (!orders?.length && canReset) || !orders?.length;
 
   const handleFilterStatus = useCallback(
     (event: React.SyntheticEvent, newValue: string) => {
@@ -125,7 +109,7 @@ export function OrderListView() {
     [updateFilters, table]
   );
 
-  const renderConfirmDialog = () => (
+  const renderDeleteDialog = () => (
     <ConfirmDialog
       open={confirmDialog.value}
       onClose={confirmDialog.onFalse}
@@ -140,8 +124,31 @@ export function OrderListView() {
           variant="contained"
           color="error"
           onClick={() => {
-            handleDeleteRows();
             confirmDialog.onFalse();
+          }}
+        >
+          Delete
+        </Button>
+      }
+    />
+  );
+
+  const renderCompleteDialog = () => (
+    <ConfirmDialog
+      open={completeDialog.value}
+      onClose={completeDialog.onFalse}
+      title="Delete"
+      content={
+        <>
+          Are you sure want to delete <strong> {table.selected.length} </strong> items?
+        </>
+      }
+      action={
+        <Button
+          variant="contained"
+          color="error"
+          onClick={() => {
+            completeDialog.onFalse();
           }}
         >
           Delete
@@ -154,11 +161,10 @@ export function OrderListView() {
     <>
       <DashboardContent>
         <CustomBreadcrumbs
-          heading="List"
+          heading="Quản lý đơn hàng"
           links={[
-            { name: 'Dashboard', href: paths.dashboard.root },
-            { name: 'Order', href: paths.dashboard.order.root },
-            { name: 'List' },
+            { name: 'Trang chủ', href: paths.dashboard.root },
+            { name: 'Quản lý đơn hàng', href: paths.dashboard.order.root }
           ]}
           sx={{ mb: { xs: 3, md: 5 } }}
         />
@@ -180,24 +186,6 @@ export function OrderListView() {
                 iconPosition="end"
                 value={tab.value}
                 label={tab.label}
-                icon={
-                  <Label
-                    variant={
-                      ((tab.value === 'all' || tab.value === currentFilters.status) && 'filled') ||
-                      'soft'
-                    }
-                    color={
-                      (tab.value === 'completed' && 'success') ||
-                      (tab.value === 'pending' && 'warning') ||
-                      (tab.value === 'cancelled' && 'error') ||
-                      'default'
-                    }
-                  >
-                    {['completed', 'pending', 'cancelled', 'refunded'].includes(tab.value)
-                      ? tableData.filter((user) => user.status === tab.value).length
-                      : tableData.length}
-                  </Label>
-                }
               />
             ))}
           </Tabs>
@@ -211,31 +199,13 @@ export function OrderListView() {
           {canReset && (
             <OrderTableFiltersResult
               filters={filters}
-              totalResults={dataFiltered.length}
+              totalResults={count ?? 0}
               onResetPage={table.onResetPage}
               sx={{ p: 2.5, pt: 0 }}
             />
           )}
 
           <Box sx={{ position: 'relative' }}>
-            <TableSelectedAction
-              dense={table.dense}
-              numSelected={table.selected.length}
-              rowCount={dataFiltered.length}
-              onSelectAllRows={(checked) =>
-                table.onSelectAllRows(
-                  checked,
-                  dataFiltered.map((row) => row.id)
-                )
-              }
-              action={
-                <Tooltip title="Delete">
-                  <IconButton color="primary" onClick={confirmDialog.onTrue}>
-                    <Iconify icon="solar:trash-bin-trash-bold" />
-                  </IconButton>
-                </Tooltip>
-              }
-            />
 
             <Scrollbar sx={{ minHeight: 444 }}>
               <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 960 }}>
@@ -243,37 +213,31 @@ export function OrderListView() {
                   order={table.order}
                   orderBy={table.orderBy}
                   headCells={TABLE_HEAD}
-                  rowCount={dataFiltered.length}
+                  rowCount={count}
                   numSelected={table.selected.length}
                   onSort={table.onSort}
-                  onSelectAllRows={(checked) =>
-                    table.onSelectAllRows(
-                      checked,
-                      dataFiltered.map((row) => row.id)
-                    )
-                  }
+
                 />
 
                 <TableBody>
-                  {/* {dataFiltered
-                    .slice(
-                      table.page * table.rowsPerPage,
-                      table.page * table.rowsPerPage + table.rowsPerPage
-                    )
+                  {orders?.slice(
+                    table.page * table.rowsPerPage,
+                    table.page * table.rowsPerPage + table.rowsPerPage
+                  )
                     .map((row) => (
                       <OrderTableRow
                         key={row.id}
                         row={row}
-                        selected={table.selected.includes(row.id)}
-                        onSelectRow={() => table.onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
+                        onRefresh={() => {
+                          mutate();
+                        }}
                         detailsHref={paths.dashboard.order.details(row.id)}
                       />
-                    ))} */}
+                    ))}
 
                   <TableEmptyRows
                     height={table.dense ? 56 : 56 + 20}
-                    emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
+                    emptyRows={emptyRows(table.page, table.rowsPerPage, orders?.length || 0)}
                   />
 
                   <TableNoData notFound={notFound} />
@@ -285,7 +249,7 @@ export function OrderListView() {
           <TablePaginationCustom
             page={table.page}
             dense={table.dense}
-            count={dataFiltered.length}
+            count={count ?? 0}
             rowsPerPage={table.rowsPerPage}
             onPageChange={table.onChangePage}
             onChangeDense={table.onChangeDense}
@@ -294,50 +258,8 @@ export function OrderListView() {
         </Card>
       </DashboardContent>
 
-      {renderConfirmDialog()}
+      {renderDeleteDialog()}
+      {renderCompleteDialog()}
     </>
   );
-}
-
-// ----------------------------------------------------------------------
-
-type ApplyFilterProps = {
-  dateError: boolean;
-  inputData: IOrderItem[];
-  filters: IOrderTableFilters;
-  comparator: (a: any, b: any) => number;
-};
-
-function applyFilter({ inputData, comparator, filters, dateError }: ApplyFilterProps) {
-  const { status, name, startDate, endDate } = filters;
-
-  const stabilizedThis = inputData.map((el, index) => [el, index] as const);
-
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-
-  inputData = stabilizedThis.map((el) => el[0]);
-
-  if (name) {
-    inputData = inputData.filter(({ orderNumber, customer }) =>
-      [orderNumber, customer.name, customer.email].some((field) =>
-        field?.toLowerCase().includes(name.toLowerCase())
-      )
-    );
-  }
-
-  if (status !== 'all') {
-    inputData = inputData.filter((order) => order.status === status);
-  }
-
-  if (!dateError) {
-    if (startDate && endDate) {
-      inputData = inputData.filter((order) => fIsBetween(order.createdAt, startDate, endDate));
-    }
-  }
-
-  return inputData;
 }

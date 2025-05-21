@@ -7,7 +7,7 @@ export function rowInPage<T>(data: T[], page: number, rowsPerPage: number) {
 // ----------------------------------------------------------------------
 
 export function emptyRows(page: number, rowsPerPage: number, arrayLength: number) {
-  return page ? Math.max(0, (1 + page) * rowsPerPage - arrayLength) : 0;
+  return page != null && arrayLength ? Math.max(0, (1 + page) * rowsPerPage - arrayLength) : 0;
 }
 
 // ----------------------------------------------------------------------

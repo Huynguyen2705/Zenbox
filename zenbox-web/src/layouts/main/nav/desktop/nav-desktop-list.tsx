@@ -53,12 +53,12 @@ export function NavList({ data, sx, ...other }: NavListProps) {
   const renderDropdown = () =>
     !!data.children && (
       <NavDropdown sx={{
-
       }} open={open}
 
         onMouseEnter={handleOpenMenu} onMouseLeave={onClose}>
         <Nav >
           <NavUl sx={{ gap: 3, flexDirection: 'row' }}>
+
             {data.children.map((list) => (
               <NavSubList key={list.subheader} subheader={list.subheader} data={list.items} />
             ))}
@@ -68,7 +68,7 @@ export function NavList({ data, sx, ...other }: NavListProps) {
     );
 
   return (
-    <NavLi sx={sx} {...other}>
+    <NavLi sx={{ ...sx, position: 'relative' }} {...other}>
       {renderNavItem()}
       {renderDropdown()}
     </NavLi>
@@ -89,6 +89,7 @@ function NavSubList({ data, subheader, sx, ...other }: NavSubListProps) {
           flexGrow: 1,
           flexBasis: 'auto',
           flexShrink: isDashboard ? 1 : 0,
+          maxWidth: 560,
           ...(isDashboard && { maxWidth: 560 }),
         }),
         ...(Array.isArray(sx) ? sx : [sx]),

@@ -35,12 +35,12 @@ const SUMMARY = [
   },
   {
     title: 'Đổi trả trong 10 ngày',
-    description: 'Hỗ trợ đổi size hoặc sản phẩm lỗi trong vòng 10 ngày.',
+    description: 'Hỗ trợ đổi trả trong vòng 10 ngày nếu có lỗi của nhà sản xuất.',
     icon: 'solar:clock-circle-bold',
   },
   {
-    title: 'Bảo hành 1 năm',
-    description: 'Bảo hành đường chỉ, khóa kéo và chất liệu lên đến 12 tháng.',
+    title: 'Vệ sinh miễn phí',
+    description: 'Miễn phí vệ sinh laptop trọn đời',
     icon: 'solar:shield-check-bold',
   },
 ];

@@ -19,7 +19,6 @@ export const useProductIds = (productsIds: string[]) => {
 
     return res.products
   })
-
   return {
     products: data,
     loadingProducts: isLoading
@@ -45,7 +44,7 @@ export function useGetAdminProducts(query: { offset: number, limit: number }) {
       totalCount: data?.count,
       productsValidating: isValidating,
       refreshProducts: mutate,
-      productsEmpty: !isLoading && !isValidating && !data?.products.length,
+      productsEmpty: !isLoading && !isValidating && !data?.products?.length,
     }),
     [data?.products, error, isLoading, isValidating]
   );
@@ -70,3 +69,4 @@ export const useDeleteProduct = () => {
     loadingDeleteProduct: isMutating,
   }
 }
+

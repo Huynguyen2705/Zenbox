@@ -1,12 +1,11 @@
 
-import type { StoreOrder } from '@medusajs/types';
+import type { AdminOrder, StoreOrder } from '@medusajs/types';
 
 import { useBoolean, usePopover } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import { Tooltip } from '@mui/material';
-import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import MenuList from '@mui/material/MenuList';
 import Collapse from '@mui/material/Collapse';
@@ -14,9 +13,10 @@ import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
+import LoadingButton from '@mui/lab/LoadingButton';
 import ListItemText from '@mui/material/ListItemText';
 
-import { RouterLink } from 'src/routes/components';
+import { useCancelOrder, useCompleteOrder } from 'src/hooks/orders';
 
 import { fCurrency } from 'src/utils/format-number';
 import { fDate, fTime } from 'src/utils/format-time';
@@ -29,39 +29,22 @@ import { CustomPopover } from 'src/components/custom-popover';
 // ----------------------------------------------------------------------
 
 type Props = {
-  row: StoreOrder;
-  selected: boolean;
+  row: AdminOrder | StoreOrder;
   detailsHref: string;
-  onSelectRow: () => void;
-  onDeleteRow: () => void;
+  onRefresh: () => void;
 };
 
-export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, detailsHref }: Props) {
+export function OrderTableRow({ row, onRefresh, detailsHref }: Props) {
   const confirmDialog = useBoolean();
+  const completeDialog = useBoolean();
+  const { cancelOrder, loadingCancelOrder } = useCancelOrder();
+  const { completeOrder, loadingCompleteOrder } = useCompleteOrder();
   const menuActions = usePopover();
   const collapseRow = useBoolean();
 
   const renderPrimaryRow = () => (
-    <TableRow hover selected={selected}>
-      {/* <TableCell>
-        <Link component={RouterLink} href={detailsHref} color="inherit" underline="always">
-          {`ORDER_${row.display_id}`}
-        </Link>
-      </TableCell> */}
+    <TableRow hover >
 
-      {/* <TableCell>
-        <Box sx={{ gap: 2, display: 'flex', alignItems: 'center' }}>
-          <Avatar alt={row.customer.name} src={row.customer.avatarUrl} />
-
-          <Stack sx={{ typography: 'body2', flex: '1 1 auto', alignItems: 'flex-start' }}>
-            <Box component="span">{row.customer.name}</Box>
-
-            <Box component="span" sx={{ color: 'text.disabled' }}>
-              {row.customer.email}
-            </Box>
-          </Stack>
-        </Box>
-      </TableCell> */}
 
       <TableCell>
         <ListItemText
@@ -187,6 +170,7 @@ export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, details
             confirmDialog.onTrue();
             menuActions.onClose();
           }}
+          disabled={row.fulfillment_status === 'delivered' || row.status !== 'pending'}
           sx={{ color: 'error.main' }}
         >
           <Iconify icon="solar:trash-bin-trash-bold" />
@@ -194,9 +178,16 @@ export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, details
         </MenuItem>
 
         <li>
-          <MenuItem component={RouterLink} href={detailsHref} onClick={() => menuActions.onClose()}>
+          <MenuItem onClick={() => {
+            completeDialog.onTrue();
+            menuActions.onClose();
+          }}
+            disabled={row.status !== 'pending'}
+            sx={{ color: 'error.success' }}
+
+          >
             <Iconify icon="solar:eye-bold" />
-            Đã nhận được hàng
+            Hoàn thành đơn hàng
           </MenuItem>
         </li>
       </MenuList>
@@ -210,9 +201,39 @@ export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, details
       title="Huỷ đơn hàng"
       content="Bạn có chắc chắn muốn huỷ đơn hàng này không?"
       action={
-        <Button variant="contained" color="error" onClick={onDeleteRow}>
+        <LoadingButton loading={loadingCancelOrder} variant="contained" color="error" onClick={async () => {
+          try {
+            await cancelOrder({ id: row.id });
+            confirmDialog.onFalse();
+            onRefresh();
+          } catch (error) {
+            console.log(error);
+          }
+        }}>
           Huỷ đơn
-        </Button>
+        </LoadingButton>
+      }
+    />
+  );
+
+  const renderCompleteDialog = () => (
+    <ConfirmDialog
+      open={completeDialog.value}
+      onClose={completeDialog.onFalse}
+      title="Hoàn thành đơn hàng"
+      content="Bạn có chắc chắn muốn hoàn thành đơn hàng này không?"
+      action={
+        <LoadingButton loading={loadingCancelOrder} variant="contained" color="success" onClick={async () => {
+          try {
+            await completeOrder({ id: row.id });
+            completeDialog.onFalse();
+            onRefresh();
+          } catch (error) {
+            console.log(error);
+          }
+        }}>
+          Hoàn thành
+        </LoadingButton>
       }
     />
   );
@@ -223,6 +244,7 @@ export function OrderTableRow({ row, selected, onSelectRow, onDeleteRow, details
       {renderSecondaryRow()}
       {renderMenuActions()}
       {renderConfrimDialog()}
+      {renderCompleteDialog()}
     </>
   );
 }

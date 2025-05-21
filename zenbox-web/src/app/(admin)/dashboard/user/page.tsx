@@ -1,13 +1,11 @@
 import type { Metadata } from 'next';
 
-import { CONFIG } from 'src/global-config';
-
-import { UserProfileView } from 'src/sections/user/view';
+import { UserListView } from 'src/sections/user/view';
 
 // ----------------------------------------------------------------------
 
-export const metadata: Metadata = { title: `User profile | Dashboard - ${CONFIG.appName}` };
+export const metadata: Metadata = { title: `Quản lý người dùng` };
 
 export default function Page() {
-  return <UserProfileView />;
+  return <UserListView />;
 }

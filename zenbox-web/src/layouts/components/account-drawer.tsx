@@ -17,7 +17,6 @@ import { paths } from 'src/routes/paths';
 import { usePathname } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
-import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { AnimateBorder } from 'src/components/animate';
@@ -83,7 +82,13 @@ export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
               href={option.label === 'Home' ? rootHref : option.href}
               color="inherit"
               underline="none"
-              onClick={onClose}
+              onClick={(event) => {
+                if (option.onClick) {
+                  event.preventDefault();
+                  option.onClick();
+                }
+                onClose();
+              }}
               sx={{
                 p: 1,
                 width: 1,
@@ -100,12 +105,6 @@ export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
               <Box component="span" sx={{ ml: 2 }}>
                 {option.label === 'Home' ? rootLabel : option.label}
               </Box>
-
-              {option.info && (
-                <Label color="error" sx={{ ml: 1 }}>
-                  {option.info}
-                </Label>
-              )}
             </Link>
           </MenuItem>
         );
