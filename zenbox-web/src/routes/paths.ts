@@ -126,7 +126,7 @@ export const paths = {
       },
     },
     invoice: {
-      root: `${ROOTS.DASHBOARD}/category`,
+      root: `${ROOTS.DASHBOARD}/invoice`,
       new: `${ROOTS.DASHBOARD}/invoice/new`,
       details: (id: string) => `${ROOTS.DASHBOARD}/invoice/${id}`,
       edit: (id: string) => `${ROOTS.DASHBOARD}/invoice/${id}/edit`,

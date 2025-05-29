@@ -1,9 +1,11 @@
 import type { SWRConfiguration } from 'swr';
+import type { StoreProduct } from '@medusajs/types';
 import type { IProductItem } from 'src/types/product';
 
 import useSWR from 'swr';
 import { useMemo } from 'react';
 
+import { sdk } from 'src/lib/medusa';
 import { fetcher, endpoints } from 'src/lib/axios';
 
 // ----------------------------------------------------------------------
@@ -63,29 +65,31 @@ export function useGetProduct(productId: string) {
   return memoizedValue;
 }
 
-// ----------------------------------------------------------------------
-
-type SearchResultsData = {
-  results: IProductItem[];
-};
 
 export function useSearchProducts(query: string) {
-  const url = query ? [endpoints.product.search, { params: { query } }] : '';
+  const url = query ? [endpoints.product.search, { params: { query } }] : null;
 
-  const { data, isLoading, error, isValidating } = useSWR<SearchResultsData>(url, fetcher, {
+  const { data, isLoading, error, isValidating } = useSWR<StoreProduct[]>(url as any, async (args) => {
+    const [_, config] = Array.isArray(args) ? args : [args];
+    const res = await sdk.store.product.list({
+      q: config?.params.query
+    })
+
+    return res.products;
+  }, {
     ...swrOptions,
     keepPreviousData: true,
   });
 
   const memoizedValue = useMemo(
     () => ({
-      searchResults: data?.results || [],
+      searchResults: data || [],
       searchLoading: isLoading,
       searchError: error,
       searchValidating: isValidating,
-      searchEmpty: !isLoading && !isValidating && !data?.results.length,
+      searchEmpty: !isLoading && !isValidating && !data?.length,
     }),
-    [data?.results, error, isLoading, isValidating]
+    [data, error, isLoading, isValidating]
   );
 
   return memoizedValue;

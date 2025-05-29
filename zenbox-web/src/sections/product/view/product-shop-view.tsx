@@ -1,36 +1,33 @@
 'use client';
 
 import type { StoreProduct } from '@medusajs/types';
-import type { IProductFilters } from 'src/types/product';
+import type { IProductFilters, ProductVariantsRes } from 'src/types/product';
 
+import useSWR from 'swr';
 import { useState } from 'react';
-import { orderBy } from 'es-toolkit';
-import { useBoolean, useSetState } from 'minimal-shared/hooks';
+import { useSetState } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
+import { Pagination, paginationClasses } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 
-import { PRODUCT_SORT_TYPE } from 'src/constants/enum';
+import { sdk } from 'src/lib/medusa';
 import {
   PRODUCT_SORT_OPTIONS,
-  PRODUCT_COLOR_OPTIONS,
-  PRODUCT_GENDER_OPTIONS,
-  PRODUCT_RATING_OPTIONS,
-  PRODUCT_CATEGORY_OPTIONS,
 } from 'src/_mock';
+import { PRODUCT_SORT_TYPE } from 'src/constants/enum';
 
 import { EmptyContent } from 'src/components/empty-content';
 
 import { CartIcon } from '../cart-icon';
-import { ProductList } from '../product-list';
 import { ProductSort } from '../product-sort';
+import { ProductList } from '../product-list';
 import { ProductSearch } from '../product-search';
 import { useCheckoutContext } from '../../checkout/context';
-import { ProductFiltersDrawer } from '../product-filters-drawer';
 import { ProductFiltersResult } from '../product-filters-result';
 
 // ----------------------------------------------------------------------
@@ -38,12 +35,15 @@ import { ProductFiltersResult } from '../product-filters-result';
 type Props = {
   products: StoreProduct[];
   title?: string;
+  categoryId?: string;
 };
 
-export function ProductShopView({ products, title }: Props) {
-  const { state: checkoutState } = useCheckoutContext();
+const limit = 20;
 
-  const openFilters = useBoolean();
+export function ProductShopView({ title, categoryId }: Props) {
+  const { state: checkoutState } = useCheckoutContext();
+  const [page, setPage] = useState<number>(1);
+
 
   const [sortBy, setSortBy] = useState<string>(PRODUCT_SORT_TYPE.NEWEST);
 
@@ -55,27 +55,24 @@ export function ProductShopView({ products, title }: Props) {
     priceRange: [0, 200],
   });
   const { state: currentFilters } = filters;
-  // const { data: productListRes } = useSWR(['product-list', sortBy], async () => {
-  //   const res = await sdk.store.product.list({
-  //     limit: 100,
-  //     offset: 0,
-  //     region_id: process.env.NEXT_PUBLIC_REGION_ID,
-  //     // category_id:
-  //     order: MAP_SORT_TYPE[sortBy]
-  //   },);
+  const { data: productListRes, isLoading } = useSWR<ProductVariantsRes>(['product-list', sortBy, page], async () => {
+    const res = await sdk.client.fetch('/store/custom/products', {
+      query: {
+        limit,
+        offset: (page - 1) * limit,
+        ...categoryId && {
+          categoryId
+        },
+        sortField: sortBy === PRODUCT_SORT_TYPE.NEWEST ? 'created_at' : 'price',
+        sortType: sortBy === PRODUCT_SORT_TYPE.NEWEST || sortBy === PRODUCT_SORT_TYPE.PRICE_DESC ? 'DESC' : 'ASC'
+      },
+      method: 'get',
+    })
 
-  //   return res;
-  // }, {
-  //   fallbackData: {
-  //     products
-  //   } as StoreProductListResponse
-  // })
+    return res as ProductVariantsRes;
+  })
 
-  const dataFiltered = applyFilter({
-    inputData: products,
-    filters: currentFilters,
-    sortBy,
-  });
+
 
   const canReset =
     currentFilters.gender.length > 0 ||
@@ -85,8 +82,8 @@ export function ProductShopView({ products, title }: Props) {
     currentFilters.priceRange[0] !== 0 ||
     currentFilters.priceRange[1] !== 200;
 
-  const notFound = !dataFiltered.length && canReset;
-  const productsEmpty = !products.length;
+  const notFound = productListRes?.variants != null && !productListRes?.variants?.length && canReset;
+  const productsEmpty = productListRes?.variants != null && !productListRes?.variants?.length;
 
   const renderFilters = () => (
     <Box
@@ -101,19 +98,6 @@ export function ProductShopView({ products, title }: Props) {
       <ProductSearch redirectPath={(id: string) => paths.product.details(id)} />
 
       <Box sx={{ gap: 1, flexShrink: 0, display: 'flex' }}>
-        <ProductFiltersDrawer
-          filters={filters}
-          canReset={canReset}
-          open={openFilters.value}
-          onOpen={openFilters.onTrue}
-          onClose={openFilters.onFalse}
-          options={{
-            colors: PRODUCT_COLOR_OPTIONS,
-            ratings: PRODUCT_RATING_OPTIONS,
-            genders: PRODUCT_GENDER_OPTIONS,
-            categories: ['all', ...PRODUCT_CATEGORY_OPTIONS],
-          }}
-        />
 
         <ProductSort
           sort={sortBy}
@@ -125,7 +109,7 @@ export function ProductShopView({ products, title }: Props) {
   );
 
   const renderResults = () => (
-    <ProductFiltersResult filters={filters} totalResults={dataFiltered.length} />
+    <ProductFiltersResult filters={filters} totalResults={productListRes?.totalCount ?? 0} />
   );
 
   const renderNotFound = () => <EmptyContent filled sx={{ py: 10 }} />;
@@ -145,78 +129,19 @@ export function ProductShopView({ products, title }: Props) {
 
       {(notFound || productsEmpty) && renderNotFound()}
 
-      <ProductList products={dataFiltered} />
+      <ProductList loading={isLoading} products={productListRes?.variants ?? []} />
+      {productListRes && productListRes.totalCount > limit && (
+        <Pagination
+          page={page}
+          onChange={(event, newPage) => setPage(newPage)}
+          count={Math.ceil(productListRes.totalCount / limit)}
+          sx={{
+            mt: { xs: 5, md: 8 },
+            [`& .${paginationClasses.ul}`]: { justifyContent: 'center' },
+          }}
+        />
+      )}
     </Container>
   );
 }
 
-// ----------------------------------------------------------------------
-
-type ApplyFilterProps = {
-  sortBy: string;
-  filters: IProductFilters;
-  inputData: (StoreProduct & { firstPrice?: number | null })[];
-};
-
-function applyFilter({ inputData, filters, sortBy }: ApplyFilterProps) {
-  const { gender, category, colors, priceRange, rating } = filters;
-
-  const min = priceRange[0];
-  const max = priceRange[1];
-
-  // // Sort by
-  // if (sortBy === 'featured') {
-  //   inputData = orderBy(inputData, ['totalSold'], ['desc']);
-  // }
-
-  if (sortBy === PRODUCT_SORT_TYPE.NEWEST) {
-    inputData = orderBy(inputData, ['created_at'], ['desc']);
-  }
-
-  if (sortBy === PRODUCT_SORT_TYPE.PRICE_DESC) {
-    inputData = inputData.map((item) => ({ ...item, firstPrice: item.variants?.[0].calculated_price?.calculated_amount }))
-    inputData = orderBy(inputData, ['firstPrice'], ['desc']);
-  }
-
-  if (sortBy === PRODUCT_SORT_TYPE.PRICE_ASC) {
-    inputData = inputData.map((item) => ({ ...item, firstPrice: item.variants?.[0].calculated_price?.calculated_amount }))
-    inputData = orderBy(inputData, ['firstPrice'], ['asc']);
-  }
-
-  // if (sortBy === 'priceAsc') {
-  //   inputData = orderBy(inputData, ['price'], ['asc']);
-  // }
-
-  // // filters
-  // if (gender.length) {
-  //   inputData = inputData.filter((product) => product.gender.some((i) => gender.includes(i)));
-  // }
-
-  // if (category !== 'all') {
-  //   inputData = inputData.filter((product) => product.category === category);
-  // }
-
-  // if (colors.length) {
-  //   inputData = inputData.filter((product) =>
-  //     product.colors.some((color) => colors.includes(color))
-  //   );
-  // }
-
-  // if (min !== 0 || max !== 200) {
-  //   inputData = inputData.filter((product) => product.price >= min && product.price <= max);
-  // }
-
-  // if (rating) {
-  //   inputData = inputData.filter((product) => {
-  //     const convertRating = (value: string) => {
-  //       if (value === 'up4Star') return 4;
-  //       if (value === 'up3Star') return 3;
-  //       if (value === 'up2Star') return 2;
-  //       return 1;
-  //     };
-  //     return product.totalRatings > convertRating(rating);
-  //   });
-  // }
-
-  return inputData;
-}

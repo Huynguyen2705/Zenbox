@@ -14,5 +14,5 @@ export default async function Page({ params }: { params: { handle: string } }) {
   const { products } = await getProducts(categories[0]?.id);
 
 
-  return <ProductShopView products={products} />;
+  return <ProductShopView categoryId={categories[0]?.id} products={products} />;
 }

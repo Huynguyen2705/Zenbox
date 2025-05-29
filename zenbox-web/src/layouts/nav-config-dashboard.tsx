@@ -101,7 +101,7 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'Quản lý danh mục',
         path: paths.dashboard.invoice.root,
-        icon: ICONS.menuItem,
+        icon: ICONS.blog,
 
       },
       // {

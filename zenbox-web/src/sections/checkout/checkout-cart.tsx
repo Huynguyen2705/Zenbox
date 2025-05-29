@@ -37,7 +37,7 @@ export function CheckoutCart() {
     onChangeItemQuantity,
   } = useCheckoutContext();
 
-  const { checkoutItems } = useCheckoutItems(checkoutState);
+  const { checkoutItems, loadingCheckoutItems } = useCheckoutItems(checkoutState);
   const isCartEmpty = !checkoutState.items.length;
   const { showLogin } = useLoginModal();
   const { authenticated } = useAuthContext();
@@ -80,7 +80,7 @@ export function CheckoutCart() {
             sx={{ mb: 3 }}
           />
 
-          {loading ? (
+          {loading || loadingCheckoutItems ? (
             renderLoading()
           ) : (
             <>

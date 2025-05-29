@@ -2,11 +2,16 @@ import type { AxiosRequestConfig } from 'axios';
 
 import axios from 'axios';
 
-import { CONFIG } from 'src/global-config';
+import { sdkConfig } from './medusa';
 
 // ----------------------------------------------------------------------
 
-const axiosInstance = axios.create({ baseURL: CONFIG.serverUrl });
+const axiosInstance = axios.create({
+  baseURL: sdkConfig.baseUrl, headers: {
+    'x-publishable-api-key': sdkConfig.publishableKey!,
+  }
+});
+
 
 axiosInstance.interceptors.response.use(
   (response) => response,

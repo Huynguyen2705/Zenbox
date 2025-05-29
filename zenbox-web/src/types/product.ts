@@ -1,3 +1,5 @@
+import type { StoreProduct } from '@medusajs/types';
+
 import type { IDateValue } from './common';
 
 // ----------------------------------------------------------------------
@@ -67,3 +69,20 @@ export type IProductItem = {
     reviewCount: number;
   }[];
 };
+
+
+export type ProductVariantsItem = {
+  id: string;
+  title: string;
+  product: StoreProduct,
+  calculated_price: {
+    calculated_amount: number;
+  }
+}
+
+export type ProductVariantsRes = {
+  variants: ProductVariantsItem[],
+  totalCount: number;
+  limit: number;
+  offset: number
+}

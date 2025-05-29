@@ -1,3 +1,5 @@
+import type { Config } from "@medusajs/js-sdk";
+
 import Medusa from "@medusajs/js-sdk"
 
 // Defaults to standard port for Medusa server
@@ -7,12 +9,14 @@ if (process.env.MEDUSA_BACKEND_URL) {
   MEDUSA_BACKEND_URL = process.env.MEDUSA_BACKEND_URL
 }
 
-export const sdk = new Medusa({
+export const sdkConfig: Config = {
   baseUrl: MEDUSA_BACKEND_URL,
   debug: process.env.NODE_ENV === "development",
   publishableKey: process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY,
-  auth:{
-    type:'jwt'
+  auth: {
+    type: 'jwt'
   }
 
-})
+}
+
+export const sdk = new Medusa(sdkConfig)

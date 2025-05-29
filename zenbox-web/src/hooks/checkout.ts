@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { useProductIds } from './product';
 
 export const useCheckoutItems = (checkoutState: ICheckoutState) => {
-  const { products } = useProductIds(checkoutState.items.map(item => item.productId));
+  const { products, loadingProducts } = useProductIds(checkoutState.items.map(item => item.productId));
 
   const checkoutItems: ICheckoutViewItem[] = useMemo(() => {
     if (!products) {
@@ -30,5 +30,5 @@ export const useCheckoutItems = (checkoutState: ICheckoutState) => {
     }))
   }, [products, checkoutState.items])
 
-  return { checkoutItems }
+  return { checkoutItems, loadingCheckoutItems: loadingProducts }
 }

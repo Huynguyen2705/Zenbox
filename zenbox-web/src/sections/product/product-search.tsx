@@ -1,4 +1,4 @@
-import type { IProductItem } from 'src/types/product';
+import type { StoreProduct } from '@medusajs/types';
 import type { Theme, SxProps } from '@mui/material/styles';
 
 import { useState, useCallback } from 'react';
@@ -32,13 +32,13 @@ export function ProductSearch({ redirectPath, sx }: Props) {
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState<IProductItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<StoreProduct | null>(null);
 
   const debouncedQuery = useDebounce(searchQuery);
   const { searchResults: options, searchLoading: loading } = useSearchProducts(debouncedQuery);
 
   const handleChange = useCallback(
-    (item: IProductItem | null) => {
+    (item: StoreProduct | null) => {
       setSelectedItem(item);
       if (item) {
         router.push(redirectPath(item.id));
@@ -49,7 +49,7 @@ export function ProductSearch({ redirectPath, sx }: Props) {
 
   const filterOptions = createFilterOptions({
     matchFrom: 'any',
-    stringify: (option: IProductItem) => `${option.name} ${option.sku}`,
+    stringify: (option: StoreProduct) => `${option.title}`,
   });
 
   const paperStyles: SxProps<Theme> = {
@@ -78,7 +78,7 @@ export function ProductSearch({ redirectPath, sx }: Props) {
       filterOptions={filterOptions}
       onChange={(event, newValue) => handleChange(newValue)}
       onInputChange={(event, newValue) => setSearchQuery(newValue)}
-      getOptionLabel={(option) => option.name}
+      getOptionLabel={(option) => option.title}
       noOptionsText={<SearchNotFound query={debouncedQuery} />}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       slotProps={{ paper: { sx: paperStyles } }}
@@ -86,7 +86,7 @@ export function ProductSearch({ redirectPath, sx }: Props) {
       renderInput={(params) => (
         <TextField
           {...params}
-          placeholder="Search..."
+          placeholder="Tìm sản phẩm..."
           slotProps={{
             input: {
               ...params.InputProps,
@@ -106,8 +106,8 @@ export function ProductSearch({ redirectPath, sx }: Props) {
         />
       )}
       renderOption={(props, product, { inputValue }) => {
-        const matches = match(product.name, inputValue);
-        const parts = parse(product.name, matches);
+        const matches = match(product.title, inputValue);
+        const parts = parse(product.title, matches);
 
         return (
           <li {...props} key={product.id}>
@@ -119,8 +119,8 @@ export function ProductSearch({ redirectPath, sx }: Props) {
             >
               <Avatar
                 key={product.id}
-                alt={product.name}
-                src={product.coverUrl}
+                alt={product.title}
+                src={product.thumbnail ?? ''}
                 variant="rounded"
                 sx={{
                   width: 48,

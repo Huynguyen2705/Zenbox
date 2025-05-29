@@ -151,9 +151,9 @@ export function Footer({
           </Grid>
         </Grid>
 
-        <Typography variant="body2" sx={{ mt: 10 }}>
+        {/* <Typography variant="body2" sx={{ mt: 10 }}>
           © All rights reserved.
-        </Typography>
+        </Typography> */}
       </Container>
     </FooterRoot>
   );
@@ -173,14 +173,14 @@ export function HomeFooter({ sx, ...other }: FooterProps) {
       ]}
       {...other}
     >
-      <Container>
+      {/* <Container>
         <Logo />
         <Box sx={{ mt: 1, typography: 'caption' }}>
           © All rights reserved.
           <br /> made by
           <Link href="https://minimals.cc/"> minimals.cc </Link>
         </Box>
-      </Container>
+      </Container> */}
     </FooterRoot>
   );
 }

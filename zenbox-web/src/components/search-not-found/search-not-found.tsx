@@ -20,7 +20,7 @@ export function SearchNotFound({ query, sx, slotProps, ...other }: SearchNotFoun
   if (!query) {
     return (
       <Typography variant="body2" {...slotProps?.description}>
-        Please enter keywords
+        Nhập từ khoá để tìm kiếm
       </Typography>
     );
   }

@@ -1,5 +1,6 @@
 
-import type { StoreProduct } from '@medusajs/types';
+
+import type { ProductVariantsItem } from 'src/types/product';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -11,7 +12,6 @@ import Fab, { fabClasses } from '@mui/material/Fab';
 import { RouterLink } from 'src/routes/components';
 
 import { fCurrency } from 'src/utils/format-number';
-import { getProductPrice } from 'src/utils/get-product-price';
 
 import { Image } from 'src/components/image';
 import { toast } from 'src/components/snackbar';
@@ -22,23 +22,21 @@ import { useCheckoutContext } from '../checkout/context';
 // ----------------------------------------------------------------------
 
 type Props = {
-  product: StoreProduct;
+  product: ProductVariantsItem;
   detailsHref: string;
 };
 
-export function ProductItem({ product, detailsHref }: Props) {
+export function ProductItem({ product: variant, detailsHref }: Props) {
   const { onAddToCart } = useCheckoutContext();
-  console.log({ product })
 
-  const { id, title, images, variants, thumbnail } =
-    product;
-  const coverUrl = thumbnail;
+
+  const { title, id: variantId, product, calculated_price } =
+    variant;
+  const coverUrl = product.thumbnail;
   const available = 1;
-  const { cheapestPrice: price, variantPrice } = getProductPrice({ product, variantId: variants?.[0].id })
   const handleAddCart = async () => {
 
     try {
-      const variantId = variants?.[0].id;
       if (!variantId) {
         toast.error('Sản phẩm không hợp lệ')
         return;
@@ -78,7 +76,7 @@ export function ProductItem({ product, detailsHref }: Props) {
   //       )}
   //     </Box>
   //   );
-  console.log({ price })
+
 
   const renderImage = () => (
     <Box sx={{ position: 'relative', p: 1 }}>
@@ -119,23 +117,13 @@ export function ProductItem({ product, detailsHref }: Props) {
 
   const renderContent = () => (
     <Stack spacing={2.5} sx={{ p: 3, pt: 2 }}>
-      <Link component={RouterLink} href={detailsHref} color="inherit" variant="subtitle2" noWrap>
-        {title}
+      <Link component={RouterLink} href={detailsHref} color="inherit" variant="subtitle2" >
+        {`${product.title} [${title}]`}
       </Link>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* <Tooltip title="Color">
-          <ColorPreview colors={colors} />
-        </Tooltip> */}
-
         <Box sx={{ gap: 0.5, display: 'flex', typography: 'subtitle1' }}>
-          {/* {priceSale && (
-            <Box component="span" sx={{ color: 'text.disabled', textDecoration: 'line-through' }}>
-              {fCurrency(priceSale)}
-            </Box>
-          )} */}
-
-          <Box component="span">{fCurrency(price?.calculated_price_number || 0)}</Box>
+          <Box component="span">{fCurrency(calculated_price?.calculated_amount || 0)}</Box>
         </Box>
       </Box>
     </Stack>
