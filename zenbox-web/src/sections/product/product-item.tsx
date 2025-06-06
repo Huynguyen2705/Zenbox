@@ -117,8 +117,8 @@ export function ProductItem({ product: variant, detailsHref }: Props) {
 
   const renderContent = () => (
     <Stack spacing={2.5} sx={{ p: 3, pt: 2 }}>
-      <Link component={RouterLink} href={detailsHref} color="inherit" variant="subtitle2" >
-        {`${product.title} [${title}]`}
+      <Link component={RouterLink} href={detailsHref} color="inherit" variant="subtitle2" noWrap>
+        {`${product.title}`}
       </Link>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

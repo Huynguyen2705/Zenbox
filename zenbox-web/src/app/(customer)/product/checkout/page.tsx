@@ -6,7 +6,7 @@ import { CheckoutView } from 'src/sections/checkout/view';
 
 // ----------------------------------------------------------------------
 
-export const metadata: Metadata = { title: `Checkout - ${CONFIG.appName}` };
+export const metadata: Metadata = { title: `Thanh toán - ${CONFIG.appName}` };
 
 export default function Page() {
   return <CheckoutView />;

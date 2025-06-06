@@ -51,13 +51,25 @@ export const GET = async (
   if (params.categoryId) {
     variants = variants.filter(item => item.product?.categories?.some(category => category?.id === params.categoryId))
   }
-  const totalCount = variants.length;
 
   if (params.sortField === 'price') {
-    variants = variants.sort((a, b) => (params.sortType === 'ASC' ? 1 : -1) * ((a.price_set?.calculated_price?.calculated_amount || 0) - (b.price_set?.calculated_price?.calculated_amount ?? 0))).slice(offset, offset + limit)
+    variants = variants.sort((a, b) => (params.sortType === 'ASC' ? 1 : -1) * ((a.price_set?.calculated_price?.calculated_amount || 0) - (b.price_set?.calculated_price?.calculated_amount ?? 0)))
   } else if (params.sortField === 'created_at') {
-    variants = variants.sort((a, b) => (params.sortType === 'ASC' ? 1 : -1) * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime())).slice(offset, offset + limit)
+    variants = variants.sort((a, b) => (params.sortType === 'ASC' ? 1 : -1) * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()))
   }
+
+  let mapProduct: Record<string, boolean> = {};
+  variants = variants.filter(item => {
+    if (!mapProduct[item.product?.id ?? '']) {
+      mapProduct[item.product?.id ?? ''] = true;
+      return true
+    }
+
+    return false
+  })
+  const totalCount = variants.length;
+
+  variants = variants.slice(offset, offset + limit)
 
   res.json({ variants, totalCount: metadata?.count || totalCount || 0, offset, limit })
 

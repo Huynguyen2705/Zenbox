@@ -25,9 +25,9 @@ import { useAccountModal } from 'src/components/auth/AccountDialog/action';
 
 import { useAuthContext } from 'src/auth/hooks';
 
+import { Footer } from './footer';
 import { NavMobile } from './nav/mobile';
 import { NavDesktop } from './nav/desktop';
-import { Footer, HomeFooter } from './footer';
 import { MainSection } from '../core/main-section';
 import { MenuButton } from '../components/menu-button';
 import { LayoutSection } from '../core/layout-section';
@@ -209,11 +209,8 @@ export function MainLayout({
   };
 
   const renderFooter = () =>
-    isHomePage ? (
-      <HomeFooter sx={slotProps?.footer?.sx} />
-    ) : (
-      <Footer sx={slotProps?.footer?.sx} layoutQuery={layoutQuery} />
-    );
+
+    <Footer sx={slotProps?.footer?.sx} layoutQuery={layoutQuery} />
 
   const renderMain = () => <MainSection {...slotProps?.main}>{children}</MainSection>;
 

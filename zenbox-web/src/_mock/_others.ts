@@ -112,22 +112,22 @@ export const _socials = [
   {
     value: 'facebook',
     label: 'Facebook',
-    path: 'https://www.facebook.com/caitlyn.kerluke',
+    path: 'https://www.facebook.com/zenbox',
   },
   {
     value: 'instagram',
     label: 'Instagram',
-    path: 'https://www.instagram.com/caitlyn.kerluke',
+    path: 'https://www.instagram.com/zenbox',
   },
   {
     value: 'linkedin',
     label: 'Linkedin',
-    path: 'https://www.linkedin.com/caitlyn.kerluke',
+    path: 'https://www.linkedin.com/zenbox',
   },
   {
     value: 'twitter',
     label: 'Twitter',
-    path: 'https://www.twitter.com/caitlyn.kerluke',
+    path: 'https://www.twitter.com/zenbox',
   },
 ];
 

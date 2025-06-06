@@ -21,21 +21,22 @@ import { Logo } from 'src/components/logo';
 
 const LINKS = [
   {
-    headline: 'Minimal',
+    headline: 'CỬA HÀNG',
     children: [
-      { name: 'About us', href: paths.about },
-      { name: 'Contact us', href: paths.contact },
-      { name: 'FAQs', href: paths.faqs },
+      { name: 'Giới thiệu', href: paths.about },
+      { name: 'Liên hệ', href: paths.contact },
+      { name: 'Câu hỏi thường gặp (FAQs)', href: paths.faqs },
     ],
   },
   {
-    headline: 'Legal',
+    headline: 'CHÍNH SÁCH',
     children: [
-      { name: 'Terms and condition', href: '#' },
-      { name: 'Privacy policy', href: '#' },
+      { name: 'Điều khoản sử dụng', href: '#' },
+      { name: 'Chính sách bảo mật', href: '#' },
+      { name: 'Đổi/trả và bảo hành', href: '#' },
     ],
   },
-  { headline: 'Contact', children: [{ name: 'support@minimals.cc', href: '#' }] },
+  { headline: 'Liên hệ', children: [{ name: 'support@zenbox.vn', href: '#' }, { name: '0909 123 456', href: '#' }] },
 ];
 
 // ----------------------------------------------------------------------
@@ -85,8 +86,8 @@ export function Footer({
                 [theme.breakpoints.up(layoutQuery)]: { mx: 'unset' },
               })}
             >
-              The starting point for your next project with Minimal UI Kit, built on the newest
-              version of Material-UI ©, ready to be customized to your style.
+              Phụ kiện chuẩn chỉnh – cho trải nghiệm laptop tối ưu.
+              Từ bộ sạc đến túi chống sốc, Zenbox giúp bạn nâng tầm thiết bị theo cách tối giản nhưng hiệu quả.
             </Typography>
 
             <Box
@@ -173,14 +174,14 @@ export function HomeFooter({ sx, ...other }: FooterProps) {
       ]}
       {...other}
     >
-      {/* <Container>
+      <Container>
         <Logo />
         <Box sx={{ mt: 1, typography: 'caption' }}>
           © All rights reserved.
           <br /> made by
           <Link href="https://minimals.cc/"> minimals.cc </Link>
         </Box>
-      </Container> */}
+      </Container>
     </FooterRoot>
   );
 }

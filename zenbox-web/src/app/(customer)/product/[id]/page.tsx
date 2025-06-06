@@ -8,7 +8,7 @@ import { ProductShopDetailsView } from 'src/sections/product/view';
 
 // ----------------------------------------------------------------------
 
-export const metadata: Metadata = { title: `Product details - ${CONFIG.appName}` };
+export const metadata: Metadata = { title: `Chi tiết sản phẩm - ${CONFIG.appName}` };
 
 type Props = {
   params: { id: string };

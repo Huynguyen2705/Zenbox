@@ -38,6 +38,10 @@ export const metadata: Metadata = {
       url: `${CONFIG.assetsDir}/favicon.ico`,
     },
   ],
+  title: 'ZENBOX',
+  description: `Phụ kiện chuẩn chỉnh – cho trải nghiệm laptop tối ưu.
+Từ bộ sạc đến túi chống sốc, Zenbox giúp bạn nâng tầm thiết bị theo cách tối giản nhưng hiệu quả.
+[ Facebook ] [ Instagram ] [ LinkedIn ] [ X (Twitter) ]`
 };
 
 // ----------------------------------------------------------------------

@@ -5,6 +5,7 @@ import type { IProductFilters, ProductVariantsRes } from 'src/types/product';
 
 import useSWR from 'swr';
 import { useState } from 'react';
+import Autoplay from 'embla-carousel-autoplay';
 import { useSetState } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
@@ -16,12 +17,15 @@ import { Pagination, paginationClasses } from '@mui/material';
 import { paths } from 'src/routes/paths';
 
 import { sdk } from 'src/lib/medusa';
+import { CONFIG } from 'src/global-config';
+import { PRODUCT_SORT_TYPE } from 'src/constants/enum';
 import {
+  _mock,
   PRODUCT_SORT_OPTIONS,
 } from 'src/_mock';
-import { PRODUCT_SORT_TYPE } from 'src/constants/enum';
 
 import { EmptyContent } from 'src/components/empty-content';
+import { Carousel, useCarousel, CarouselDotButtons } from 'src/components/carousel';
 
 import { CartIcon } from '../cart-icon';
 import { ProductSort } from '../product-sort';
@@ -39,6 +43,12 @@ type Props = {
 };
 
 const limit = 20;
+const SLIDES = Array.from({ length: 4 }, (_, index) => ({
+  id: _mock.id(index),
+  title: _mock.postTitle(index),
+  coverUrl: `${CONFIG.assetsDir}/banner/banner-${index + 1}.jpg`,
+  description: _mock.description(index),
+}));
 
 export function ProductShopView({ title, categoryId }: Props) {
   const { state: checkoutState } = useCheckoutContext();
@@ -114,8 +124,31 @@ export function ProductShopView({ title, categoryId }: Props) {
 
   const renderNotFound = () => <EmptyContent filled sx={{ py: 10 }} />;
 
+  const carousel = useCarousel({ loop: true, slidesToShow: 1 }, [Autoplay({ playOnInit: true, delay: 5000, })]);
+
+
   return (
     <Container sx={{ mb: 15 }}>
+      <Box sx={{ position: 'relative', width: '100%' }}>
+        <Carousel carousel={carousel} sx={{ borderRadius: 2 }}>
+          {SLIDES.map((item, index) => (
+            <CarouselItem key={item.id} index={index} item={item} />
+          ))}
+        </Carousel>
+
+        <CarouselDotButtons
+          scrollSnaps={carousel.dots.scrollSnaps}
+          selectedIndex={carousel.dots.selectedIndex}
+          onClickDot={carousel.dots.onClickDot}
+          sx={{
+            bottom: 4,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            position: 'absolute',
+            color: 'common.white',
+          }}
+        />
+      </Box>
       <CartIcon totalItems={checkoutState.totalItems} />
 
       <Typography variant="h4" sx={{ my: { xs: 3, md: 5 } }}>
@@ -144,4 +177,19 @@ export function ProductShopView({ title, categoryId }: Props) {
     </Container>
   );
 }
-
+type CarouselItemProps = {
+  index: number;
+  item: any;
+};
+function CarouselItem({ item, index }: CarouselItemProps) {
+  return (
+    <Box sx={{ position: 'relative' }}>
+      <Box
+        component="img"
+        alt={item.title}
+        src={item.coverUrl}
+        sx={{ objectFit: 'cover', width: '100%', height: '50vh' }}
+      />
+    </Box>
+  );
+}

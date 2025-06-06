@@ -126,7 +126,7 @@ export function ProductNewEditForm({ currentProduct }: Props) {
     return optionsVariant.map((item) => ({
       options: item,
       title: Object.entries(item).map(option => option[1]).join(', '),
-      manage_inventory: true,
+      manage_inventory: false,
       prices: [{
         currency_code: 'vnd',
         amount: 0,
